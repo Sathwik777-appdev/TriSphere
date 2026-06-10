@@ -1,0 +1,66 @@
+name: 🚀 Deploy TriSphere
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+jobs:
+  # ── Job 1: Deploy Backend to Cloud Run ─────────────────────────────────────
+  deploy-backend:
+    name: Deploy Backend → Cloud Run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy backend to Cloud Run (source deploy)
+        run: |
+          gcloud run deploy backend \
+            --source ./backend \
+            --region us-central1 \
+            --update-secrets="GROQ_API_KEY=GROQ_API_KEY:latest,GEMINI_API_KEY=GEMINI_API_KEY:latest" \
+            --min-instances=1 \
+            --quiet
+        env:
+          CLOUDSDK_CORE_PROJECT: trisphere-4b121
+
+  # ── Job 2: Build & Deploy Frontend to Firebase Hosting ─────────────────────
+  deploy-frontend:
+    name: Build Frontend → Firebase Hosting
+    runs-on: ubuntu-latest
+    needs: deploy-backend # Only deploy frontend after backend succeeds
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          channelId: live
+          projectId: trisphere-4b121

@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "trisphere-4b121"
+  },
+  "targets": {
+    "trisphere-4b121": {
+      "hosting": {
+        "main": [
+          "trisphere"
+        ]
+      }
+    }
+  }
+}

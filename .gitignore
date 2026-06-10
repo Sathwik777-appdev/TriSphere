@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# Build output
+dist/
+build/
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Vercel
+.vercel
+
+# Logs & temp
+*.log
+*.bak
+debug_output.txt
+
+# Test artifacts (backend TTS)
+backend/test_*.wav
+backend/debug_*.js
+backend/debug_*.txt
+backend/tts_error*.log
+
+# Service account keys (NEVER commit)
+**/serviceAccount.json
+**/service-account*.json
+

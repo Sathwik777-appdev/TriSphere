@@ -1,0 +1,1925 @@
+/* ========== PREMIUM FONT & DESIGN SYSTEM ========== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  /* Typography Scale (Major Third - 1.25) */
+  --text-xs: 0.64rem;
+  --text-sm: 0.8rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.563rem;
+  --text-2xl: 1.953rem;
+  --text-3xl: 2.441rem;
+  --text-4xl: 3.052rem;
+
+  /* Primary - Space Blue */
+  --primary-50: #eff6ff;
+  --primary-100: #dbeafe;
+  --primary-200: #bfdbfe;
+  --primary-300: #93c5fd;
+  --primary-400: #60a5fa;
+  --primary-500: #3b82f6;
+  --primary-600: #2563eb;
+  --primary-700: #1d4ed8;
+  --primary-800: #1e40af;
+  --primary-900: #1e3a8a;
+
+  /* Surface Colors (Dark theme) */
+  --surface-0: #000814;
+  --surface-1: #0f172a;
+  --surface-2: #1e293b;
+  --surface-3: #334155;
+  --surface-4: #475569;
+
+  /* Semantic Colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #06b6d4;
+
+  /* Animation Timings */
+  --ease-bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== SHIMMER SKELETON ANIMATION ========== */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.03) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+.skeleton-card {
+  background: rgba(30, 41, 59, 0.6);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.skeleton-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  margin-bottom: 12px;
+}
+
+.skeleton-line {
+  height: 12px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+}
+
+.skeleton-line-lg {
+  height: 20px;
+  margin-bottom: 12px;
+}
+
+/* ========== BUTTON RIPPLE EFFECT ========== */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(40);
+    opacity: 0;
+  }
+}
+
+.btn-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1);
+  pointer-events: none;
+}
+
+.btn-ripple:active::after {
+  animation: ripple 0.6s ease-out;
+}
+
+.gradient-border {
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.gradient-border:hover {
+  border-color: rgba(59, 130, 246, 0.8);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+}
+
+/* ========== PREMIUM GLASS CARD ========== */
+.glass-premium {
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.37),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s var(--ease-smooth);
+}
+
+.glass-premium:hover {
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 0 40px rgba(59, 130, 246, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+.progress-animated {
+  background: #3b82f6;
+  border-radius: 4px;
+}
+
+/* ========== LEGENDARY ITEM GLOW ========== */
+@keyframes legendaryGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+    border-color: rgba(245, 158, 11, 0.5);
+  }
+
+  50% {
+    box-shadow: 0 0 35px rgba(245, 158, 11, 0.5);
+    border-color: rgba(245, 158, 11, 0.8);
+  }
+}
+
+/* ========== 3D CARD TILT EFFECT ========== */
+.card-3d {
+  transition: transform 0.3s var(--ease-smooth);
+  transform-style: preserve-3d;
+}
+
+.card-3d:hover {
+  transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) scale(1.02);
+}
+
+/* ========== STAGGER ANIMATION DELAYS ========== */
+.stagger-1 {
+  animation-delay: 0.05s;
+}
+
+.stagger-2 {
+  animation-delay: 0.1s;
+}
+
+.stagger-3 {
+  animation-delay: 0.15s;
+}
+
+.stagger-4 {
+  animation-delay: 0.2s;
+}
+
+.stagger-5 {
+  animation-delay: 0.25s;
+}
+
+/* ========== ENTRANCE ANIMATION ========== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s var(--ease-smooth) forwards;
+  opacity: 0;
+}
+
+/* ========== SUCCESS GLOW ========== */
+.success-glow {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+}
+
+/* ========== TOUCH TARGET OPTIMIZATION ========== */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ========== ORIGINAL ANIMATIONS ========== */
+@keyframes popOut {
+  0% {
+    opacity: 0;
+    transform: translateY(60px) scale(0.7);
+  }
+
+  60% {
+    opacity: 1;
+    transform: translateY(-10px) scale(1.05);
+  }
+
+  80% {
+    transform: translateY(0px) scale(0.98);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes growUp {
+  0% {
+    height: 0;
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+  }
+
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(255, 107, 107, 0.6);
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga' 1, 'calt' 1;
+  transition: background 0.3s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Disable pull-to-refresh + horizontal overscroll on mobile.
+   `overscroll-behavior: none` tells the browser NOT to chain overscroll
+   gestures (pull-down at scroll-top, swipe-left at scroll-start) to its
+   default behaviors — page reload, back-nav, etc. Internal scrolling
+   inside the app keeps working exactly as before, including normal
+   inertia and rubber-band on iOS. This protects us from accidental /
+   spam page reloads that would re-run every initial Firestore fetch and
+   spike our Cloud Run + Firebase bill.
+   ───────────────────────────────────────────────────────────────────── */
+html, body {
+  overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
+  -webkit-overscroll-behavior-y: none;
+  -webkit-overscroll-behavior-x: none;
+}
+
+/* Standard Blue Theme */
+body.standard-theme {
+  background: #000814;
+  color: #e0e7ff;
+}
+
+/* ==================== STANDARD THEME ENHANCED STYLES ==================== */
+body.standard-theme * {
+  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+/* Global button override removed. Components should style their own buttons. */
+
+/* Password toggle button - reset global styles (kept outside the media
+   query because the desktop login uses this class and needs the reset). */
+body.standard-theme button.password-toggle-btn,
+.dashboard-bg button.password-toggle-btn,
+button.password-toggle-btn {
+  position: absolute !important;
+  right: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background: none !important;
+  background-color: transparent !important;
+  border: none !important;
+  padding: 4px !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  color: rgba(148, 163, 184, 0.8) !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: unset !important;
+  min-height: unset !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 10 !important;
+}
+
+body.standard-theme button.password-toggle-btn:hover,
+.dashboard-bg button.password-toggle-btn:hover,
+button.password-toggle-btn:hover {
+  background: none !important;
+  background-color: transparent !important;
+  color: rgba(59, 130, 246, 1) !important;
+  box-shadow: none !important;
+  transform: translateY(-50%) !important;
+}
+
+/* Space Theme - Secondary Buttons (nebula variant) */
+body.standard-theme button.secondary,
+body.standard-theme button[data-variant="secondary"] {
+  background: linear-gradient(135deg, #581c87, #7e22ce, #a21caf) !important;
+  box-shadow: 0 4px 20px rgba(126, 34, 206, 0.4) !important;
+}
+
+/* RGB Theme - Success Buttons */
+body.standard-theme button.success,
+body.standard-theme button[data-variant="success"] {
+  background: linear-gradient(135deg, #00ff80, #00ffaa, #00ff80) !important;
+  box-shadow: 0 4px 20px rgba(0, 255, 128, 0.4) !important;
+  color: #0a0a1a !important;
+}
+
+/* Space Theme - Cards and Panels */
+body.standard-theme [style*="Card"],
+body.standard-theme [class*="card"],
+body.standard-theme [class*="Card"],
+body.standard-theme [class*="panel"],
+body.standard-theme [class*="Panel"] {
+  background: transparent !important;
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 30px rgba(99, 102, 241, 0.15) !important;
+}
+
+/* EXCEPTION: Leaderboard and white-background containers stay white */
+body.standard-theme .leaderboard-white-bg,
+body.standard-theme [class*="leaderboard"] {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  backdrop-filter: none !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Leaderboard table - ensure it fills the full width */
+body.standard-theme .leaderboard-table,
+.leaderboard-table {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+/* Student Progress Table - force full width */
+.student-progress-container,
+body.standard-theme .student-progress-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.student-progress-container table {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+/* Student Progress Table - selection color light blue */
+.student-progress-container ::selection {
+  background-color: #93c5fd !important;
+  color: #1e3a8a !important;
+}
+
+.student-progress-container ::-moz-selection {
+  background-color: #93c5fd !important;
+  color: #1e3a8a !important;
+}
+
+/* Student Progress Table - row click/hover states light blue */
+.student-progress-container tr:hover,
+.student-progress-container tr:active,
+.student-progress-container tr:focus,
+body.standard-theme .student-progress-container tr:hover,
+body.standard-theme .student-progress-container tr:active,
+body.standard-theme .student-progress-container tr:focus {
+  background-color: #dbeafe !important;
+}
+
+.student-progress-container tr td,
+body.standard-theme .student-progress-container tr td {
+  background-color: inherit !important;
+}
+
+.student-progress-container tbody tr:nth-child(odd),
+body.standard-theme .student-progress-container tbody tr:nth-child(odd) {
+  background-color: #ffffff !important;
+}
+
+.student-progress-container tbody tr:nth-child(even),
+body.standard-theme .student-progress-container tbody tr:nth-child(even) {
+  background-color: #f8fafc !important;
+}
+
+body.standard-theme [style*="Card"]:hover,
+body.standard-theme [class*="card"]:hover,
+body.standard-theme [class*="Card"]:hover {
+  border-color: rgba(139, 92, 246, 0.5) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 40px rgba(139, 92, 246, 0.25) !important;
+}
+
+/* Space Theme - Inputs
+   DESKTOP-ONLY. On mobile, this global rule was painting every input
+   with a dark background + violet border — so any field already inside
+   a styled pill (like the search overlay) rendered as a double-layered
+   nested box. Mobile inputs should respect their own component styles. */
+@media (min-width: 769px) {
+  body.standard-theme input,
+  body.standard-theme textarea,
+  body.standard-theme select {
+    background: rgba(15, 23, 42, 0.9) !important;
+    border: 1px solid rgba(99, 102, 241, 0.4) !important;
+    color: #e0e7ff !important;
+    border-radius: 10px !important;
+    box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.1) !important;
+  }
+
+  body.standard-theme input:focus,
+  body.standard-theme textarea:focus,
+  body.standard-theme select:focus {
+    border-color: rgba(139, 92, 246, 0.7) !important;
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), inset 0 0 10px rgba(99, 102, 241, 0.1) !important;
+    outline: none !important;
+  }
+
+  body.standard-theme input::placeholder,
+  body.standard-theme textarea::placeholder {
+    color: rgba(224, 231, 255, 0.65) !important;
+  }
+}
+
+/* Space Theme - Headers */
+body.standard-theme header {
+  background: linear-gradient(135deg, rgba(0, 8, 20, 0.98), rgba(30, 27, 75, 0.95), rgba(0, 8, 20, 0.98)) !important;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Space Theme - Text Highlights */
+body.standard-theme h1,
+body.standard-theme h2,
+body.standard-theme h3,
+body.standard-theme h4 {
+  color: #e0e7ff !important;
+  text-shadow: 0 0 20px rgba(139, 92, 246, 0.4) !important;
+}
+
+/* Exception: Headings on white/light backgrounds need dark text */
+body.standard-theme [style*="background-color: white"] h1,
+body.standard-theme [style*="background-color: white"] h2,
+body.standard-theme [style*="background-color: white"] h3,
+body.standard-theme [style*="background-color: white"] h4,
+body.standard-theme [style*="background-color: 'white'"] h1,
+body.standard-theme [style*="background-color: 'white'"] h2,
+body.standard-theme [style*="background-color: 'white'"] h3,
+body.standard-theme [style*="background-color: 'white'"] h4,
+body.standard-theme [style*="background-color: rgb(255, 255, 255)"] h1,
+body.standard-theme [style*="background-color: rgb(255, 255, 255)"] h2,
+body.standard-theme [style*="background-color: rgb(255, 255, 255)"] h3,
+body.standard-theme [style*="background-color: rgb(255, 255, 255)"] h4,
+body.standard-theme [style*="background-color: #ffffff"] h1,
+body.standard-theme [style*="background-color: #ffffff"] h2,
+body.standard-theme [style*="background-color: #ffffff"] h3,
+body.standard-theme [style*="background-color: #ffffff"] h4,
+body.standard-theme [style*="background-color: #f9fafb"] h4,
+body.standard-theme [style*="background-color: #f9fafb"] h3 {
+  color: #111827 !important;
+  text-shadow: none !important;
+}
+
+/* Leaderboard and chart sections - force dark text on white backgrounds */
+.leaderboard-dark-text,
+body.standard-theme .leaderboard-dark-text {
+  color: #111827 !important;
+  text-shadow: none !important;
+}
+
+/* Chapter names live on the DARK navy glass card in both MyNotes and
+   TeacherNotes — they need white text to be readable. The original rule
+   forced black (a legacy from a light-mode design) which made every
+   chapter heading invisible on the dark background. */
+.chapter-name-light-bg,
+body.standard-theme .chapter-name-light-bg,
+body.standard-theme h4.chapter-name-light-bg,
+body.dark-theme .chapter-name-light-bg,
+body.dark-theme h4.chapter-name-light-bg {
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+/* Empty state title - force red text */
+.empty-state-title-red,
+body.standard-theme .empty-state-title-red,
+body.standard-theme h4.empty-state-title-red {
+  color: #ef4444 !important;
+  text-shadow: none !important;
+}
+
+/* Student Overview title - force red text */
+.student-overview-title,
+body.standard-theme .student-overview-title,
+body.standard-theme h3.student-overview-title {
+  color: #ef4444 !important;
+  text-shadow: none !important;
+}
+
+/* ==================== GLOBAL FIX: Dark text on light backgrounds ==================== */
+/* Utility class for any element that needs dark text on light background */
+.light-bg-dark-text,
+body.standard-theme .light-bg-dark-text {
+  color: #111827 !important;
+  text-shadow: none !important;
+}
+
+/* Force dark text on white container backgrounds */
+body.standard-theme [style*="background: white"],
+body.standard-theme [style*="background: #fff"],
+body.standard-theme [style*="background: rgb(255"],
+body.standard-theme [style*="background-color: white"],
+body.standard-theme [style*="background-color: #fff"],
+body.standard-theme [style*="background-color: rgb(255"],
+body.standard-theme [style*="background-color: #f9fafb"],
+body.standard-theme [style*="background-color: #f8fafc"],
+body.standard-theme [style*="background-color: #f1f5f9"],
+body.standard-theme [style*="background-color: #fafafa"],
+body.standard-theme [style*="backgroundColor: white"],
+body.standard-theme [style*="backgroundColor: 'white'"] {
+  color: #111827 !important;
+}
+
+/* Force dark text on common light-background elements */
+body.standard-theme [style*="background: white"] *,
+body.standard-theme [style*="background-color: white"] *,
+body.standard-theme [style*="background-color: #fff"] *,
+body.standard-theme [style*="background-color: rgb(255"] *,
+body.standard-theme [style*="background-color: #f9fafb"] *,
+body.standard-theme [style*="background-color: #f8fafc"] *,
+body.standard-theme [style*="background-color: #f1f5f9"] * {
+  color: inherit;
+  text-shadow: none !important;
+}
+
+/* Specific overrides for headings in light containers */
+body.standard-theme [style*="background: white"] h1,
+body.standard-theme [style*="background: white"] h2,
+body.standard-theme [style*="background: white"] h3,
+body.standard-theme [style*="background: white"] h4,
+body.standard-theme [style*="background: white"] h5,
+body.standard-theme [style*="background: white"] h6,
+body.standard-theme [style*="background-color: white"] h1,
+body.standard-theme [style*="background-color: white"] h2,
+body.standard-theme [style*="background-color: white"] h3,
+body.standard-theme [style*="background-color: white"] h4,
+body.standard-theme [style*="background-color: white"] h5,
+body.standard-theme [style*="background-color: white"] h6,
+body.standard-theme [style*="background-color: #f9fafb"] h1,
+body.standard-theme [style*="background-color: #f9fafb"] h2,
+body.standard-theme [style*="background-color: #f9fafb"] h3,
+body.standard-theme [style*="background-color: #f9fafb"] h4 {
+  color: #111827 !important;
+  text-shadow: none !important;
+}
+
+/* Specific overrides for paragraphs and spans in light containers */
+body.standard-theme [style*="background: white"] p,
+body.standard-theme [style*="background: white"] span,
+body.standard-theme [style*="background: white"] div,
+body.standard-theme [style*="background-color: white"] p,
+body.standard-theme [style*="background-color: white"] span,
+body.standard-theme [style*="background-color: #f9fafb"] p,
+body.standard-theme [style*="background-color: #f9fafb"] span {
+  color: #374151 !important;
+  text-shadow: none !important;
+}
+
+/* Labels and form text on light backgrounds */
+body.standard-theme [style*="background: white"] label,
+body.standard-theme [style*="background-color: white"] label,
+body.standard-theme [style*="background-color: #f9fafb"] label {
+  color: #111827 !important;
+}
+
+/* Table cells on light backgrounds */
+body.standard-theme [style*="background: white"] td,
+body.standard-theme [style*="background: white"] th,
+body.standard-theme [style*="background-color: white"] td,
+body.standard-theme [style*="background-color: white"] th,
+body.standard-theme [style*="background-color: #f9fafb"] td,
+body.standard-theme [style*="background-color: #f9fafb"] th,
+body.standard-theme [style*="background-color: #ffffff"] td,
+body.standard-theme [style*="background-color: #ffffff"] th {
+  color: #111827 !important;
+  text-shadow: none !important;
+}
+
+/* settings icon button override - remove artificial backgrounds */
+.settings-icon-btn,
+body.standard-theme button.settings-icon-btn {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 8px !important;
+  min-width: unset !important;
+  outline: none !important;
+}
+
+.settings-icon-btn:hover,
+.settings-icon-btn:focus,
+.settings-icon-btn:active,
+.settings-icon-btn:focus-visible,
+body.standard-theme button.settings-icon-btn:hover,
+body.standard-theme button.settings-icon-btn:focus,
+body.standard-theme button.settings-icon-btn:active {
+  opacity: 0.7;
+  transform: scale(1.1);
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+}
+
+
+/* Force dark text in tables with white/light backgrounds */
+body.standard-theme table[style*="borderCollapse"] td,
+body.standard-theme table[style*="borderCollapse"] th,
+body.standard-theme div[style*="backgroundColor: 'white'"] td,
+body.standard-theme div[style*="backgroundColor: 'white'"] th,
+body.standard-theme div[style*="white"] table td,
+body.standard-theme div[style*="white"] table th {
+  color: #111827 !important;
+}
+
+/* Leaderboard table specific - ensure dark text */
+body.standard-theme .leaderboard-table td,
+body.standard-theme .leaderboard-table th,
+.leaderboard-table td,
+.leaderboard-table th {
+  color: #111827 !important;
+}
+
+/* Space Theme - Stat Cards */
+body.standard-theme [class*="statCard"],
+body.standard-theme [style*="statCard"] {
+  background: transparent !important;
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 25px rgba(99, 102, 241, 0.2) !important;
+}
+
+body.standard-theme [class*="statCard"]:hover,
+body.standard-theme [style*="statCard"]:hover {
+  border-color: rgba(139, 92, 246, 0.5) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 40px rgba(139, 92, 246, 0.25) !important;
+  transform: translateY(-5px) !important;
+}
+
+/* Space Theme - Tab Navigation */
+body.standard-theme [class*="tabNavigation"],
+body.standard-theme [class*="viewNavigation"] {
+  background: transparent !important;
+  border: 1px solid rgba(99, 102, 241, 0.2) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Space Theme - Active Tab
+   Scoped to actual active-tab classes only. Previously this rule also
+   matched `button[style*="background: linear-gradient"]`, which hijacked
+   EVERY button with an inline gradient (Start, Take Quiz, login submit,
+   etc.) and repainted it with this chunky indigo→violet — that's the
+   "violet shit colour" the user reported. Limited to tab markers now
+   so buttons keep whatever gradient their component declared. */
+body.standard-theme [class*="tabActive"] {
+  background: linear-gradient(135deg, #4338ca, #7c3aed) !important;
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.5) !important;
+}
+
+/* Space Theme - Tables */
+body.standard-theme table {
+  background: transparent !important;
+  border: 1px solid rgba(99, 102, 241, 0.2) !important;
+}
+
+body.standard-theme th {
+  background: rgba(99, 102, 241, 0.15) !important;
+  color: #a5b4fc !important;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.3) !important;
+}
+
+body.standard-theme td {
+  border-bottom: 1px solid rgba(99, 102, 241, 0.1) !important;
+  color: #e0e7ff !important;
+}
+
+body.standard-theme tr:hover {
+  background: rgba(99, 102, 241, 0.1) !important;
+}
+
+/* RGB Theme - Modals */
+body.standard-theme [class*="modal"]>div,
+body.standard-theme [style*="modal"]>div {
+  background: rgba(15, 15, 35, 0.95) !important;
+  border: 1px solid rgba(0, 255, 255, 0.3) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 50px rgba(0, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+/* RGB Theme - Fix white backgrounds to have dark text */
+body.standard-theme div[style*="background: white"],
+body.standard-theme div[style*="background: 'white'"],
+body.standard-theme div[style*="backgroundColor: white"],
+body.standard-theme div[style*="backgroundColor: 'white'"],
+body.standard-theme [style*="background:#fff"],
+body.standard-theme [style*="background: #fff"],
+body.standard-theme [style*="backgroundColor:#fff"],
+body.standard-theme [style*="backgroundColor: #fff"] {
+  background: rgba(15, 15, 35, 0.95) !important;
+  color: #ffffff !important;
+}
+
+/* Modal content containers - make dark themed */
+body.standard-theme .modal-content,
+body.standard-theme [class*="ModalContent"],
+body.standard-theme [class*="modalContent"] {
+  background: rgba(15, 15, 35, 0.95) !important;
+  color: #ffffff !important;
+}
+
+/* Fix any h3 headers in modals */
+body.standard-theme [style*="modal"] h3,
+body.standard-theme [class*="modal"] h3 {
+  color: #ffffff !important;
+}
+
+/* Discussion forum and feedback modals - convert to dark theme */
+body.standard-theme [style*="backgroundColor: 'white'"],
+body.standard-theme [style*="background: 'white'"] {
+  background: linear-gradient(135deg, rgba(15, 15, 35, 0.98), rgba(30, 40, 70, 0.98)) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(0, 255, 255, 0.3) !important;
+}
+
+/* Fix text in modal headers */
+body.standard-theme [style*="borderBottom"] h3 {
+  color: #ffffff !important;
+}
+
+/* Fix close buttons in modals */
+body.standard-theme [style*="modal"] button[style*="background: 'none'"],
+body.standard-theme [style*="modal"] button[style*="background: none"] {
+  color: #ffffff !important;
+}
+
+/* RGB Theme - Dropdowns */
+body.standard-theme [class*="dropdown"],
+body.standard-theme [class*="Dropdown"] {
+  background: rgba(15, 15, 35, 0.95) !important;
+  border: 1px solid rgba(0, 255, 255, 0.3) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 255, 255, 0.15) !important;
+}
+
+/* RGB Theme - Scrollbar */
+body.standard-theme ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+body.standard-theme ::-webkit-scrollbar-track {
+  background: rgba(10, 10, 26, 0.8);
+}
+
+body.standard-theme ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+  border-radius: 20px;
+  border: 2px solid #0f172a;
+}
+
+body.standard-theme ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #00ffff, #ff00ff);
+}
+
+/* RGB Glow Animation for special elements */
+@keyframes rgbGlowPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.4), 0 0 40px rgba(0, 255, 255, 0.2);
+  }
+
+  33% {
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.4), 0 0 40px rgba(255, 0, 255, 0.2);
+  }
+
+  66% {
+    box-shadow: 0 0 20px rgba(128, 0, 255, 0.4), 0 0 40px rgba(128, 0, 255, 0.2);
+  }
+}
+
+/* Special RGB glow class */
+body.standard-theme .rgb-glow {
+  animation: rgbGlowPulse 4s ease infinite !important;
+}
+
+/* RGB Theme - Links */
+body.standard-theme a {
+  color: #00ffff !important;
+  text-decoration: none !important;
+}
+
+body.standard-theme a:hover {
+  color: #ff00ff !important;
+  text-shadow: 0 0 10px rgba(255, 0, 255, 0.5) !important;
+}
+
+@keyframes rgbGlow {
+
+  0%,
+  100% {
+    filter: brightness(1) saturate(1.2);
+  }
+
+  50% {
+    filter: brightness(1.1) saturate(1.5);
+  }
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Unified Dashboard Background - Video Background */
+.dashboard-bg {
+  position: relative;
+  min-height: 100vh;
+  overflow: visible !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Note: Static background removed - using VideoBackground component instead */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes wave {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(20deg);
+  }
+
+  75% {
+    transform: rotate(-20deg);
+  }
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled,
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes flipPageLeft {
+  0% {
+    transform: rotateY(0deg);
+  }
+
+  20% {
+    transform: rotateY(0deg);
+  }
+
+  100% {
+    transform: rotateY(-180deg);
+  }
+}
+
+@keyframes flipPageRight {
+  0% {
+    transform: rotateY(0deg);
+  }
+
+  20% {
+    transform: rotateY(0deg);
+  }
+
+  100% {
+    transform: rotateY(180deg);
+  }
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3) rotateY(180deg);
+  }
+
+  60% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2) rotateY(0deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotateY(0deg);
+  }
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.1);
+    visibility: hidden;
+  }
+}
+
+@keyframes textReveal {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+    filter: blur(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes fadeInSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dark Theme Professional Styling */
+body.dark-theme header {
+  background: rgba(22, 27, 34, 0.95) !important;
+  border-bottom: 1px solid #30363d !important;
+  box-shadow: 0 1px 0 0 #21262d !important;
+}
+
+body.dark-theme .statsContainer,
+body.dark-theme [style*="statsContainer"] {
+  background: transparent !important;
+}
+
+body.dark-theme [style*="statCard"] {
+  background: rgba(240, 240, 240, 0.95) !important;
+  border: 1px solid #30363d !important;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3) !important;
+  animation: none !important;
+}
+
+body.dark-theme [style*="statCard"] * {
+  color: #000000 !important;
+}
+
+body.dark-theme [style*="statCard"]:hover {
+  border-color: #58a6ff !important;
+  box-shadow: 0 3px 12px rgba(88, 166, 255, 0.2) !important;
+}
+
+body.dark-theme [style*="statValue"] {
+  color: #000000 !important;
+  text-shadow: none;
+  font-weight: 700 !important;
+}
+
+body.dark-theme [style*="statLabel"] {
+  color: #000000 !important;
+  font-weight: 600 !important;
+}
+
+body.dark-theme [style*="viewNavigation"],
+body.dark-theme [style*="content"]>div:first-child {
+  background: rgba(22, 27, 34, 0.8) !important;
+  border: 1px solid #30363d !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
+body.dark-theme button[style*="viewButton"],
+body.dark-theme [style*="viewButton"] {
+  color: #c9d1d9 !important;
+  background: transparent !important;
+  font-weight: 600 !important;
+}
+
+body.dark-theme button[style*="viewButton"]:hover,
+body.dark-theme [style*="viewButton"]:hover {
+  background: rgba(88, 166, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+body.dark-theme [style*="viewButtonActive"],
+body.dark-theme button[style*="background: linear-gradient(135deg, rgb(121, 40, 202)"] {
+  background: linear-gradient(135deg, #238636 0%, #2ea043 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(46, 160, 67, 0.4) !important;
+}
+
+body.dark-theme input,
+body.dark-theme textarea,
+body.dark-theme select {
+  background: #0d1117 !important;
+  border: 1px solid #30363d !important;
+  color: #e6edf3 !important;
+}
+
+body.dark-theme input::placeholder,
+body.dark-theme textarea::placeholder {
+  color: #8b949e !important;
+}
+
+body.dark-theme input:focus,
+body.dark-theme textarea:focus,
+body.dark-theme select:focus {
+  border-color: #58a6ff !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15) !important;
+}
+
+body.dark-theme table {
+  background: rgba(22, 27, 34, 0.8) !important;
+  border: 1px solid #30363d !important;
+}
+
+body.dark-theme th {
+  background: #161b22 !important;
+  color: #e6edf3 !important;
+  border-bottom: 1px solid #30363d !important;
+}
+
+body.dark-theme td {
+  border-bottom: 1px solid #21262d !important;
+  color: #c9d1d9 !important;
+}
+
+body.dark-theme tr:hover {
+  background: rgba(48, 54, 61, 0.3) !important;
+}
+
+body.dark-theme [style*="backgroundColor: 'white'"],
+body.dark-theme [style*="background: 'white'"],
+body.dark-theme [style*="backgroundColor: \"white\""],
+body.dark-theme [style*="background-color: white"],
+body.dark-theme [style*="backgroundColor: white"] {
+  background: rgba(22, 27, 34, 0.8) !important;
+}
+
+body.dark-theme [style*="border: '1px solid #ddd'"],
+body.dark-theme [style*="borderBottom: '1px solid #eee'"],
+body.dark-theme [style*="borderBottom: '2px solid #ddd'"] {
+  border-color: #30363d !important;
+}
+
+body.dark-theme h1,
+body.dark-theme h2,
+body.dark-theme h3,
+body.dark-theme h4 {
+  color: #ffffff !important;
+  text-shadow: 0 0 10px rgba(88, 166, 255, 0.3);
+}
+
+body.dark-theme p,
+body.dark-theme span,
+body.dark-theme div {
+  color: #e6edf3 !important;
+}
+
+body.dark-theme [style*="color: '#999'"],
+body.dark-theme [style*="color: '#666'"],
+body.dark-theme [style*="color: '#718096'"],
+body.dark-theme [style*="color: 'white'"],
+body.dark-theme [style*="color: white"],
+body.dark-theme [style*="color: \"white\""] {
+  color: #e6edf3 !important;
+}
+
+body.dark-theme [style*="backgroundColor: '#f9f9f9'"],
+body.dark-theme [style*="backgroundColor: '#f5f5f5'"],
+body.dark-theme [style*="backgroundColor: '#fafafa'"] {
+  background: rgba(22, 27, 34, 0.5) !important;
+}
+
+body.dark-theme [style*="backgroundColor: '#f9f9f9'"] *,
+body.dark-theme [style*="backgroundColor: '#f5f5f5'"] *,
+body.dark-theme [style*="backgroundColor: '#fafafa'"] * {
+  color: #e6edf3 !important;
+}
+
+body.dark-theme [style*="settingsDropdown"] {
+  background: #161b22 !important;
+  border: 1px solid #30363d !important;
+  box-shadow: 0 16px 32px rgba(1, 4, 9, 0.85) !important;
+}
+
+body.dark-theme [style*="settingsDropdown"] * {
+  color: #e6edf3 !important;
+}
+
+body.dark-theme [style*="settingsValue"] {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+body.dark-theme [style*="settingsLabel"] {
+  color: #c9d1d9 !important;
+}
+
+body.dark-theme [style*="settingsDivider"] {
+  background: #30363d !important;
+}
+
+body.dark-theme [style*="modal"]>div {
+  background: #161b22 !important;
+  border: 1px solid #30363d !important;
+}
+
+body.dark-theme [style*="modal"] * {
+  color: #e6edf3 !important;
+}
+
+body.dark-theme label {
+  color: #e6edf3 !important;
+}
+
+body.dark-theme button {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(88, 166, 255, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+body.dark-theme button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(88, 166, 255, 0.5) !important;
+}
+
+body.dark-theme button:not([style*="background"]):not([style*="backgroundColor"]) {
+  background: linear-gradient(135deg, #238636 0%, #2ea043 100%) !important;
+  border: 1px solid #2ea043 !important;
+}
+
+body.dark-theme button:not([style*="background"]):not([style*="backgroundColor"]):hover {
+  background: linear-gradient(135deg, #2ea043 0%, #3fb950 100%) !important;
+}
+
+/* =====================================================
+   UNIVERSAL DASHBOARD RESPONSIVE STYLES
+   Works on Desktop, Tablet, Mobile Portrait & Landscape
+   Applies to: Admin, Student, Teacher, Parent Dashboards
+   ===================================================== */
+
+/* Base responsive utilities */
+.dashboard-responsive {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* ==================== UNIVERSAL FIXES ==================== */
+
+/* Tables always scrollable on small screens */
+@media (max-width: 768px) {
+  table {
+    display: block !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+  }
+}
+
+/* Hide scrollbar but allow scrolling */
+.hide-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Standards-mode scrolling: the SINGLE scroll container is <html>,
+   not <body>. We use `overflow-x: clip` (not `hidden`) on <body>
+   because per CSS spec, setting overflow-x: hidden when overflow-y
+   is visible AUTOMATICALLY promotes overflow-y to "auto" — which
+   silently turns body into a second scroll container, conflicts
+   with html's scroll, and breaks wheel-event routing on Chrome
+   desktop. `clip` blocks horizontal overflow without that side
+   effect. Body stays a pure content holder; html alone scrolls. */
+html {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+body {
+  overflow-x: clip !important;
+  overflow-y: visible !important;
+  min-height: 100vh;
+  height: auto !important;
+}
+
+/* Fix gradient text on all devices */
+[class*="title"],
+[class*="statValue"] {
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+
+/* Safe area for notched devices */
+@supports (padding: max(0px)) {
+  header {
+    padding-left: max(12px, env(safe-area-inset-left)) !important;
+    padding-right: max(12px, env(safe-area-inset-right)) !important;
+  }
+}
+
+
+/* Skeleton Loaders */
+@media (max-width: 480px) {
+  [class*="skeleton"] {
+    border-radius: 6px !important;
+  }
+}
+
+/* Animation smoothness on mobile */
+@media (max-width: 768px) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+
+  /* Bottom nav HIDDEN - using dropdown tabs instead
+  .bottom-nav {
+    display: flex !important;
+  }
+
+  .dashboard-content-mobile {
+    padding-bottom: 80px !important;
+  }
+  */
+
+  /* Hide top tab navigation on mobile (use bottom nav instead) */
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  /* Safe area for notched phones */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+
+  /* ========== MOBILE HEADER IMPROVEMENTS ========== */
+  header {
+    padding: 12px 16px !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  /* Logo section - more compact */
+  header img {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  header h1 {
+    font-size: 16px !important;
+  }
+
+  header p {
+    font-size: 10px !important;
+  }
+
+  /* ========== STAT CARDS - Stack vertically on mobile ========== */
+  .admin-stats-container,
+  [class*="statsContainer"] {
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding: 10px !important;
+  }
+
+  .admin-stat-card,
+  [class*="statCard"] {
+    width: 100% !important;
+    min-width: unset !important;
+    padding: 12px 16px !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .admin-stat-value,
+  [class*="statValue"] {
+    font-size: 20px !important;
+  }
+
+  /* ========== BUTTONS - Better touch targets ========== */
+  button {
+    min-height: 44px !important;
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+  }
+
+  /* Smaller icon-only buttons */
+  button.settings-icon-btn {
+    min-height: 36px !important;
+    padding: 8px !important;
+  }
+
+  /* ========== CONTENT AREA - Full width on mobile ========== */
+  .dashboard-bg>div,
+  .admin-content,
+  [class*="content"] {
+    padding: 10px !important;
+  }
+
+  /* ========== FORMS - Better mobile input sizing ========== */
+  input,
+  select,
+  textarea {
+    min-height: 44px !important;
+    font-size: 16px !important;
+    /* Prevents iOS zoom on focus */
+    padding: 10px 14px !important;
+  }
+
+  /* ========== MODALS - Full width on mobile ========== */
+  [class*="Modal"],
+  [class*="modal"] {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    max-height: 85vh !important;
+    margin: 10px !important;
+  }
+
+  /* ========== TABLES - Horizontal scroll on mobile ========== */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* ========== CLASS SELECTOR BUTTONS ========== */
+  [class*="classButton"],
+  [class*="class-button"] {
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    min-width: 60px !important;
+  }
+
+  /* ========== GREETING SECTION - Compact ========== */
+  [class*="greeting"] {
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+  }
+
+  /* ========== SUBJECT LIST - Scroll horizontally ========== */
+  [class*="subjectList"],
+  [class*="SubjectList"] {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding-bottom: 10px !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ========== SETTINGS DROPDOWN - Full width ========== */
+  [class*="settingsDropdown"] {
+    right: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+}
+
+/* Extra small devices (phones < 400px) */
+@media (max-width: 400px) {
+  header h1 {
+    font-size: 14px !important;
+  }
+
+  .admin-stat-value,
+  [class*="statValue"] {
+    font-size: 18px !important;
+  }
+
+  button {
+    font-size: 12px !important;
+    padding: 8px 12px !important;
+  }
+}
+
+/* Swipe indicator animation */
+@keyframes swipeHint {
+
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.5;
+  }
+
+  50% {
+    transform: translateX(10px);
+    opacity: 1;
+  }
+}
+
+.swipe-hint {
+  animation: swipeHint 2s ease-in-out infinite;
+}
+
+/* ========== SIMULATION LANDSCAPE MODE FOR MOBILE ========== */
+/* Desktop: normal view */
+.simulation-landscape-container {
+  position: relative;
+  width: 100%;
+}
+
+.simulation-iframe {
+  width: 100%;
+  border-radius: 6px;
+}
+
+/* ========== SIMULATION PAGE STYLES ========== */
+.simulation-landscape-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+}
+
+.simulation-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #fff;
+}
+
+@media screen and (max-width: 768px) {
+  .simulation-landscape-container {
+    height: calc(100dvh - 120px);
+  }
+}
+
+/* Fix for Quiz Options Visibility */
+button.quiz-option-btn,
+body.standard-theme button.quiz-option-btn {
+  background: white !important;
+  color: #333 !important;
+  border: 2px solid #e0e0e0 !important;
+  box-shadow: none !important;
+  border-radius: 8px !important;
+  padding: 16px !important;
+  text-align: left !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  text-transform: none !important;
+}
+
+button.quiz-option-btn:hover,
+body.standard-theme button.quiz-option-btn:hover {
+  background: #f5f5f5 !important;
+  border-color: #6200ea !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+button.quiz-option-btn.selected,
+body.standard-theme button.quiz-option-btn.selected {
+  background: #e8f5e9 !important;
+  border-color: #4caf50 !important;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2) !important;
+}
+
+/* Fix text inside the button */
+button.quiz-option-btn span,
+body.standard-theme button.quiz-option-btn span {
+  color: #333 !important;
+  text-shadow: none !important;
+}
+
+/* ============================================================
+   MOBILE-ONLY OVERRIDES (ZERO IMPACT ON PC)
+   ============================================================ */
+@media screen and (max-width: 768px) {
+  :root {
+    /* Scale down Typography for mobile */
+    --text-2xl: 1.5rem;
+    --text-3xl: 1.8rem;
+    --text-4xl: 2.2rem;
+  }
+
+  /* Mobile-only: keep the SINGLE-scroll-container model from the
+     desktop rules. Body uses `overflow-x: clip` instead of `hidden`
+     so the CSS-spec quirk doesn't auto-promote body's overflow-y
+     to `auto` and silently kill scrolling. */
+  html {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    position: relative;
+    width: 100%;
+    height: auto !important;
+    min-height: 100vh;
+  }
+  body {
+    overflow-x: clip !important;
+    overflow-y: visible !important;
+    position: relative;
+    width: 100%;
+    height: auto !important;
+    min-height: 100vh;
+  }
+
+  /* No global button override on mobile — the "Cosmic" theme rule above
+     is scoped to (min-width: 769px), so every mobile button renders with
+     its component's own inline styles, no fighting. */
+
+  /* Ensure labels inside buttons are clearly visible */
+  button span,
+  button div {
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  /* ──────────────────────────────────────────────────────────────────
+     Strip the "Space / Cosmic" theme effects from all the catch-all
+     selectors that paint cards, panels, stat tiles, modals, dropdowns,
+     and table chrome with chunky indigo/violet borders + glow shadows.
+     On mobile each component already declares clean inline styles —
+     letting the desktop rule override them produces the "violet shit
+     colour" the user reported across the More tab, To-do, etc.
+
+     Using `revert !important` to cancel the cascade contribution of
+     the !important author rules above, so the inline component style
+     becomes the winner again.
+     ────────────────────────────────────────────────────────────────── */
+  body.standard-theme [style*="Card"],
+  body.standard-theme [class*="card"],
+  body.standard-theme [class*="Card"],
+  body.standard-theme [class*="panel"],
+  body.standard-theme [class*="Panel"],
+  body.standard-theme [class*="statCard"],
+  body.standard-theme [style*="statCard"],
+  body.standard-theme [style*="Card"]:hover,
+  body.standard-theme [class*="card"]:hover,
+  body.standard-theme [class*="Card"]:hover,
+  body.standard-theme [class*="statCard"]:hover,
+  body.standard-theme [style*="statCard"]:hover,
+  body.standard-theme [class*="tabNavigation"],
+  body.standard-theme [class*="viewNavigation"],
+  body.standard-theme [class*="modal"] > div,
+  body.standard-theme [style*="modal"] > div,
+  body.standard-theme .modal-content,
+  body.standard-theme [class*="ModalContent"],
+  body.standard-theme [class*="modalContent"],
+  body.standard-theme [class*="dropdown"],
+  body.standard-theme [class*="Dropdown"] {
+    background: revert !important;
+    background-color: revert !important;
+    background-image: revert !important;
+    border: revert !important;
+    border-color: revert !important;
+    border-radius: revert !important;
+    box-shadow: revert !important;
+    backdrop-filter: revert !important;
+    -webkit-backdrop-filter: revert !important;
+    transform: revert !important;
+    animation: none !important;
+  }
+
+  /* Theme-driven table chrome also doesn't belong on mobile. */
+  body.standard-theme table,
+  body.standard-theme th,
+  body.standard-theme td,
+  body.standard-theme tr:hover {
+    background: revert !important;
+    background-color: revert !important;
+    border: revert !important;
+    box-shadow: revert !important;
+    color: revert !important;
+  }
+
+  /* Heavy section header gradient also gets in the way on mobile. */
+  body.standard-theme header {
+    background: revert !important;
+    box-shadow: revert !important;
+  }
+
+  /* Dashboard Layout Overrides */
+  .admin-header,
+  .teacher-header,
+  .parent-header {
+    display: none !important;
+    /* Managed by JS isMobile check or mobile-only header */
+  }
+
+  .stats-container,
+  [class*="statsContainer"] {
+    grid-template-columns: 1fr !important;
+    padding: 15px 20px !important;
+    gap: 12px !important;
+  }
+
+  .stat-card,
+  [class*="statCard"] {
+    padding: 20px !important;
+    gap: 15px !important;
+  }
+
+  .content-area,
+  [class*="content"] {
+    padding: 10px 15px 80px 15px !important;
+    /* Leave space for bottom navigation if any */
+  }
+
+  .view-content,
+  [class*="viewContent"] {
+    padding: 20px !important;
+    border-radius: 16px !important;
+    min-height: auto !important;
+  }
+
+  /* Table and List adjustments for mobile */
+  table,
+  thead,
+  tbody,
+  th,
+  td,
+  tr {
+    display: block;
+  }
+
+  thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  tr {
+    margin-bottom: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  td {
+    border: none;
+    position: relative;
+    padding-left: 50% !important;
+    text-align: right !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    min-height: 35px;
+  }
+
+  td:before {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    width: 45%;
+    padding-right: 10px;
+    white-space: nowrap;
+    text-align: left;
+    font-weight: bold;
+    color: #60a5fa;
+    content: attr(data-label);
+  }
+
+  /* Modal adjustments */
+  [class*="modalContent"] {
+    width: 95% !important;
+    max-width: 95% !important;
+    margin: 10px !important;
+    padding: 15px !important;
+  }
+
+  /* Button label visibility revisited */
+  button span,
+  .btn-text {
+    font-size: 13px !important;
+    display: block !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Dashboard Container Fixes */
+  .dashboard-container,
+  [class*="DashboardContainer"] {
+    padding: 15px !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    min-height: 100vh;
+  }
+
+  /* UI Utilities */
+  .mobile-hide {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: block !important;
+  }
+
+  .mobile-flex {
+    display: flex !important;
+  }
+
+  /* Glass premium adjustments for mobile */
+  .glass-premium {
+    padding: 15px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Prevent horizontal scroll from large titles */
+  h1,
+  h2,
+  h3 {
+    word-wrap: break-word;
+    max-width: 100%;
+  }
+}
+
+/* Close Settings Button positioning override */
+button.close-settings-btn {
+  position: fixed !important;
+  top: calc(env(safe-area-inset-top, 0px) + 20px) !important;
+  right: 16px !important;
+  left: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  color: #ffffff !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 2100 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  outline: none !important;
+}
+
+button.close-settings-btn svg {
+  stroke: #ffffff !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* Responsive adjustments for TodoPanel container & task cards */
+@media (max-width: 768px) {
+  .todo-panel-container {
+    padding: 12px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .todo-task-card {
+    gap: 10px !important;
+    padding: 12px !important;
+  }
+}
+
+/* Textbook Uploader Choose File label text override */
+.file-button-label {
+  color: #ffffff !important;
+}
+

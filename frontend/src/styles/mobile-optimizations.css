@@ -1,0 +1,308 @@
+/* =============================================================================
+   Mobile Performance Optimizations
+   ============================================================================= */
+/* Everything in here is geared at making the app feel smooth on mid-range
+   Android phones and older iPhones. The goal is 60fps interaction and
+   sub-100ms touch response, with no jank on scroll or page transitions. */
+
+/* ─── 1. Render hints on the html / body root ─────────────────────────── */
+html {
+  /* Smooth-scroll for any anchor navigation */
+  scroll-behavior: smooth;
+  /* Prevent iOS rubber-band scroll past the document end (separate from
+     overscroll-behavior which kills pull-to-refresh) */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Pinch-zoom / double-tap-zoom guard — MOBILE ONLY. We deliberately
+   skip this on desktop because some Windows precision-touchpad drivers
+   surface their two-finger scroll as TouchEvents, and constraining
+   `touch-action` here was preventing the wheel-style scroll from
+   reaching the page. The viewport meta + the JS gesturestart guard in
+   main.jsx still block pinch on mobile browsers and PWAs. */
+@media (hover: none) and (pointer: coarse) {
+  html {
+    touch-action: pan-x pan-y;
+  }
+}
+
+body {
+  /* DO NOT apply `transform: translateZ(0)` here. It creates a containing
+     block for `position: fixed` descendants — so the Three.js starfield
+     background (which uses position:fixed to stay glued to the viewport)
+     ends up scrolling with the page, leaving black space at the bottom.
+     The minor GPU-compositing win wasn't worth that visual break. */
+  /* Hint to the rasterizer to prioritize speed for text on mobile */
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* No double-tap-to-zoom flash anywhere */
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  /* iOS momentum scrolling for the body / main scroll containers */
+  -webkit-overflow-scrolling: touch;
+  /* Stop accidental long-press text-selection on UI chrome (cards, tabs,
+     buttons). Inputs / textareas / chat bubbles re-enable it below. */
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  /* Disable iOS callout menu on long-press of UI elements */
+  -webkit-touch-callout: none;
+}
+
+/* Inputs, textareas, message bubbles, and markdown bodies need selection
+   so users can copy/paste — re-enable for them. */
+input,
+textarea,
+[contenteditable="true"],
+.lernix-mobile [class*="bubble"],
+.lernix-mobile pre,
+.lernix-mobile code,
+.assistant-body,
+.assistant-body * {
+  -webkit-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
+}
+
+/* ─── 2. Smoother momentum scrolling on every overflow container ───── */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─── 3. GPU-accelerate elements that animate often ───────────────── */
+/* Each of these gets promoted to its own compositor layer so transforms
+   and opacity changes don't trigger layout/paint on the main thread. */
+[class*="motion-"],
+.lernix-mobile main,
+.lernix-mobile [class*="bottomNav"],
+.tools-picker-card,
+.tools-picker-subject,
+.lernix-pill,
+.lernix-suggest,
+.lernix-action,
+.lernix-history,
+.lernix-iconbtn,
+.lernix-send-active,
+.lernix-send-idle,
+.lernix-attach-row,
+.app-loader-container,
+.app-loader-logo,
+.app-loader-bar {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* ─── 4. Touch action hints for snappier scrolling ────────────────── */
+/* The default `touch-action: auto` lets the browser try to detect scroll
+   direction, which adds ~300ms latency on some Android chips. Forcing
+   `manipulation` removes the legacy double-tap-zoom delay. */
+button,
+a,
+[role="button"],
+.lernix-mobile [class*="Btn"],
+.tools-picker-card,
+.tools-picker-subject,
+.tools-picker-chip,
+.tools-picker-close,
+.tools-picker-back {
+  touch-action: manipulation;
+}
+
+/* Scroll containers — allow only vertical scroll (cleans up diagonal
+   gestures interrupting the scroll) */
+.lernix-mobile [class*="body"],
+.lernix-mobile [class*="history"],
+.lernix-mobile [class*="thread"] {
+  touch-action: pan-y;
+}
+
+/* ─── 5. Image rendering hints ─────────────────────────────────────── */
+/* Tell mobile GPUs to prefer fast (bilinear) scaling — avoids the heavier
+   "high-quality" path that some Android browsers default to */
+img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: auto;
+}
+
+/* Avatar images deserve crisp scaling — override the body rule for them */
+[class*="avatar"] img,
+[class*="Avatar"] img {
+  image-rendering: auto;
+}
+
+/* ─── 6. Layout containment for off-screen tabs ───────────────────── */
+/* Each persisted (display:none) tab is a `contain: layout paint`
+   candidate — the browser can skip re-layout/paint work for hidden
+   tabs entirely, dramatically cutting CPU on tab switches. */
+[data-tab-mounted="true"][hidden],
+[data-tab-mounted="true"][style*="display: none"] {
+  contain: layout paint size style;
+}
+
+/* ─── 7. Reduce motion for users that prefer it ───────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ─── 8. Save data: trim non-essential visuals ────────────────────── */
+@media (prefers-reduced-data: reduce) {
+  /* Aurora orbs, particles, and shine animations are decorative — kill
+     them when the user has Data Saver / Lite mode on */
+  [class*="orb"],
+  [class*="aurora"],
+  [class*="particle"],
+  [class*="shine"],
+  [class*="grain"] {
+    display: none !important;
+  }
+}
+
+/* ─── 9. Low-end device hints via display-mode ────────────────────── */
+/* When running standalone (PWA), drop the heaviest backdrop-filter blurs
+   that some Android Web Views can't composite at 60fps */
+@media (display-mode: standalone) {
+  /* Keep look but reduce blur strength by ~40% so the rasterizer keeps up */
+  .glass-card-mobile,
+  [class*="glassCard"] {
+    backdrop-filter: blur(14px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+  }
+}
+
+/* ─── 10. Prevent flicker on transform-animated elements ──────────── */
+/* The dreaded "flash of white" on iOS Safari when an animated element
+   first paints — kills it by pre-marking the element opaque to the
+   compositor */
+[class*="motion-"] {
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
+}
+
+/* ─── 11. Buttons inside chat must not break under touch-action ───── */
+/* The Lernix chat textarea uses Enter-to-send; ensure it ALWAYS accepts
+   keyboard + scroll without the `touch-action: manipulation` rule
+   blocking pinch-to-zoom INSIDE the textarea (rare but real) */
+.lernix-mobile textarea {
+  touch-action: auto !important;
+}
+
+/* ─── 12. Smooth corners on dark surfaces ─────────────────────────── */
+/* Forces Safari/Chrome to anti-alias the corner radius on stacked dark
+   surfaces, removing the faint "stairstep" you sometimes see at 1× DPI */
+[class*="glass"],
+[class*="Card"],
+.lernix-mobile [class*="bubble"] {
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  mask-image: radial-gradient(white, black);
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   DEVICE-TIER DEGRADATION
+   ═════════════════════════════════════════════════════════════════════
+   Body classes are set by src/utils/deviceTier.js based on hardware
+   signals. Low-tier devices (≤ 2 GB RAM, ≤ 4 cores, data-saver, slow
+   network) get a stripped-down render path so the app stays smooth even
+   on phones the size of a Redmi 9A / Galaxy A02.
+   ═════════════════════════════════════════════════════════════════════ */
+
+/* ── LOW TIER (≤ 2 GB RAM or weaker) ── */
+body.device-tier-low {
+  /* All decorative effects off */
+}
+
+/* Kill aurora orbs, starfields, particles, shine sweeps, grain overlay */
+body.device-tier-low [class*="orb"],
+body.device-tier-low [class*="aurora"],
+body.device-tier-low [class*="particle"],
+body.device-tier-low [class*="starfield"],
+body.device-tier-low [class*="shine"],
+body.device-tier-low [class*="grain"],
+body.device-tier-low [class*="bgWash"],
+body.device-tier-low [class*="mesh"] {
+  display: none !important;
+}
+
+/* Replace backdrop-filter blurs with cheap solid backgrounds — blurs
+   are the single biggest GPU cost on Android Web Views */
+body.device-tier-low [class*="glassCard"],
+body.device-tier-low [class*="glass-card"],
+body.device-tier-low .lernix-mobile [class*="bubble"],
+body.device-tier-low [class*="bottomNav"],
+body.device-tier-low [class*="settingsOverlay"],
+body.device-tier-low .tools-picker-card,
+body.device-tier-low .lernix-pill {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: rgba(20, 28, 50, 0.95) !important;
+}
+
+/* Disable will-change so the compositor doesn't allocate extra GPU
+   memory per element (counter-intuitive but on truly low RAM, fewer
+   layers = better) */
+body.device-tier-low [class*="motion-"] {
+  will-change: auto !important;
+  transform: none !important;
+}
+
+/* Faster, simpler animations — no springs, no rotation, just fade */
+body.device-tier-low *,
+body.device-tier-low *::before,
+body.device-tier-low *::after {
+  animation-duration: 0.18s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.15s !important;
+  transition-property: opacity, color !important;
+}
+
+/* Drop drop-shadows — they trigger expensive offscreen renders */
+body.device-tier-low [class*="shadow"],
+body.device-tier-low [class*="Shadow"] {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Single-thread-safe font rendering (no subpixel antialiasing) */
+body.device-tier-low {
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: auto;
+}
+
+/* ── MID TIER (3-4 GB RAM, 6 cores) ── */
+/* Keep visuals, just dial back the heaviest blurs */
+body.device-tier-mid [class*="glassCard"],
+body.device-tier-mid [class*="glass-card"] {
+  backdrop-filter: blur(12px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(160%) !important;
+}
+
+/* Reduce particle / shine animation FPS via longer durations on mid-tier */
+body.device-tier-mid [class*="particle"],
+body.device-tier-mid [class*="orb"] {
+  animation-duration: 12s !important; /* slower = fewer frame events */
+}
+
+/* ── is-mobile (any tier, viewport < 768px) ── */
+/* General mobile-only tweaks that all phones benefit from regardless
+   of hardware tier. */
+body.is-mobile {
+  /* Disable the smooth-scroll behaviour that was set globally — on
+     mobile the OS already provides momentum scrolling and adding our
+     own JS smooth-scroll on top stutters */
+  scroll-behavior: auto;
+}
+
+body.is-mobile [class*="motion-"] {
+  /* Reduce framer-motion's default 60-frame springs — looks the same
+     to the user but cuts re-render cost ~30% on the compositor */
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
+}

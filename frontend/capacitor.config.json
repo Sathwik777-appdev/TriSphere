@@ -1,0 +1,6 @@
+{
+  "appId": "com.trisphere.app",
+  "appName": "TriSphere",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

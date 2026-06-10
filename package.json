@@ -1,0 +1,26 @@
+{
+    "name": "trisphere-monorepo",
+    "private": true,
+    "version": "1.0.0",
+    "description": "TriSphere Monorepo",
+    "workspaces": [
+        "frontend",
+        "backend",
+        "functions"
+    ],
+    "engines": {
+        "node": "20.x"
+    },
+    "scripts": {
+        "frontend": "npm run dev -w frontend",
+        "backend": "npm run dev -w backend",
+        "dev": "concurrently \"npm run frontend\" \"npm run backend\" --names \"frontend,backend\" --prefix-colors \"cyan,magenta\"",
+        "build": "npm run build -w frontend",
+        "deploy:frontend": "npm run build && firebase deploy --only hosting",
+        "deploy:backend": "gcloud builds submit --tag gcr.io/trisphere-4b121/backend backend && gcloud run deploy backend --image gcr.io/trisphere-4b121/backend --platform managed --region us-central1 --allow-unauthenticated --min-instances 0 --max-instances 10",
+        "install:all": "npm install && npm install -w frontend && npm install -w backend && npm install -w functions"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    }
+}

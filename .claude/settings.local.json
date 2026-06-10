@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find \"C:/Users/Sathwik/Documents/Dell/TriSphere/frontend/src/components\" -name \"*.jsx\" -exec grep -l \"try.*catch\" {} \\\\;)",
+      "Bash(xargs -I {} bash -c 'echo \"File: {}\"; grep -A 5 \"try.*{\" {} 2>/dev/null | head -15')",
+      "Bash(grep -v \"comment\\\\|//\")",
+      "Bash(curl -s \"https://trisphere-4b121.web.app/assets/StudentDashboard-CKJIeDP9.js\")",
+      "Bash(curl -s \"https://trisphere-4b121.web.app/assets/StudentDashboard-CKJIeDP9.js\" -o /tmp/sd.js)",
+      "Read(//tmp/**)",
+      "Bash(npm run *)",
+      "Bash(gcloud run *)"
+    ]
+  }
+}

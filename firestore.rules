@@ -1,0 +1,388 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- HELPER FUNCTIONS ---
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Cached user document to avoid redundant get calls in complex rules
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'none');
+    }
+    
+    function hasRole(roles) {
+      return isSignedIn() && getUserRole() in roles;
+    }
+    
+    function isAdmin() {
+      return hasRole(['admin', 'principal']);
+    }
+    
+    function isDeveloper() {
+      return hasRole(['developer']);
+    }
+    
+    function isTeacher() {
+      return hasRole(['teacher']);
+    }
+    
+    function isStudent() {
+      return hasRole(['student']);
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isParentOf(studentId) {
+      return isSignedIn() && 
+             getUserData().role == 'parent' && 
+             studentId in getUserData().get('childrenIds', []);
+    }
+
+    // --- COLLECTION SPECIFIC RULES ---
+    
+    match /users/{userId} {
+      // The full user doc carries private fields (email, phone, FCM tokens,
+      // the admin-controlled `_tempPassword` mirror). Restrict reads to the
+      // owner, staff, and a PARENT of the user (so parents can read their
+      // own child's profile to render the parent dashboard). Student-facing
+      // search uses /publicProfiles instead, which is a Cloud-Function-
+      // maintained mirror of only the safe fields.
+      allow get: if isSignedIn() && (
+        isOwner(userId) ||
+        isTeacher() ||
+        isAdmin() ||
+        isDeveloper() ||
+        isParentOf(userId)
+      );
+      allow list: if isSignedIn() && (isTeacher() || isAdmin() || isDeveloper());
+
+      allow create: if isAdmin() || isDeveloper(); // Users shouldn't create their own docs normally
+
+      allow update: if (isAdmin() || isDeveloper()) ||
+                      (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'schoolName', 'class', 'classNumber']));
+
+      allow delete: if isAdmin() || isDeveloper();
+    }
+
+    // Public profile mirror — written ONLY by the syncPublicProfile Cloud
+    // Function (Admin SDK bypasses these rules). Carries the subset of
+    // `users/{uid}` that is safe to expose to peers: username, name, class,
+    // schoolName, role, profilePhoto, searchUsername, plus public stats.
+    // Used by the in-app student search overlay so we never expose private
+    // fields like email / phone / _tempPassword.
+    match /publicProfiles/{userId} {
+      allow read: if isSignedIn();
+      allow write: if false; // Cloud Function only
+    }
+
+    // User Store (Avatars, XP, Equipped Items)
+    match /userStore/{userId} {
+      // Unified read rule for profiles/leaderboards - allow reading any store if signed in
+      allow read: if isSignedIn();
+      // Only the owner or admins can modify their store data
+      allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin() || isDeveloper());
+    }
+
+    match /textbooks/{textbookId} {
+      allow read: if isSignedIn();
+      allow write: if isTeacher() || isAdmin();
+    }
+    
+    match /assignments/{assignmentId} {
+      allow read: if isSignedIn();
+      allow write: if isTeacher() || isAdmin();
+    }
+    
+    match /studentSubmissions/{submissionId} {
+      // Restrict reading submissions to the owner, their teacher, admins,
+      // or a PARENT linked to that student. Without the parent clause the
+      // parent dashboard's "Submitted" / "Assignments" counters get a
+      // permission-denied empty snapshot and render as 0.
+      allow read: if isSignedIn() && (
+        isOwner(resource.data.studentId) ||
+        isTeacher() ||
+        isAdmin() ||
+        isParentOf(resource.data.studentId)
+      );
+
+      allow create: if isSignedIn() && isStudent() && isOwner(request.resource.data.studentId);
+      allow update: if (isStudent() && isOwner(resource.data.studentId) && !resource.data.graded) ||
+                      isTeacher() || isAdmin();
+      allow delete: if isTeacher() || isAdmin();
+    }
+
+    match /quizResults/{resultId} {
+      // Restrict reading quiz results to the owner, their teacher, admins,
+      // or the linked parent. Same reason as above — needed for the parent
+      // dashboard to compute "Avg score" and the low-score alert count.
+      allow read: if isSignedIn() && (
+        isOwner(resource.data.studentId) ||
+        isTeacher() ||
+        isAdmin() ||
+        isParentOf(resource.data.studentId)
+      );
+
+      allow create: if isSignedIn() && isStudent() && isOwner(request.resource.data.studentId);
+      allow update: if isTeacher() || isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    match /aiGeneratedContent/{contentId} {
+      allow read: if isSignedIn();
+      allow write: if isTeacher() || isAdmin();
+    }
+
+    // ASTRA crisis alerts — written ONLY by the astraCrisisAlert Cloud
+    // Function (Admin SDK bypasses these rules). Recipients (admin / parent)
+    // read their own alerts; admins/teachers can also mark followedUp.
+    match /crisisAlerts/{alertId} {
+      allow read: if isSignedIn() && (
+        isAdmin() || isTeacher() ||
+        (resource != null && isOwner(resource.data.recipientUid))
+      );
+      // Clients should never write these — Cloud Function handles creation.
+      allow create: if false;
+      allow update: if (isAdmin() || isTeacher()) &&
+                      request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['read', 'followedUp', 'followedUpBy', 'followedUpAt']);
+      allow delete: if isAdmin();
+    }
+
+    // ASTRA daily emotional check-ins.
+    // Doc id is `{userId}_{YYYY-MM-DD}` so we can derive ownership from the
+    // doc id itself — that lets students read a non-existent doc to check
+    // whether today's check-in has happened yet (resource is null on a
+    // non-existent doc, so resource.data.userId would explode otherwise).
+    // Teachers and admins read all (for the Wellbeing tab) and update only
+    // the `reviewed*` fields when marking an entry as followed-up.
+    match /studentMoods/{moodId} {
+      // Teachers / admins / developers see all. The student owner reads via
+      // the `moodId` self-match (doc id starts with their uid). Parents
+      // need the body-based isParentOf check — `resource.data.userId` is
+      // the student's uid, which we cross-check against the parent's
+      // `childrenIds` list. We guard with `resource != null` so the rule
+      // tolerates the empty-doc probe pattern students use.
+      allow read: if isSignedIn() && (
+        isTeacher() || isAdmin() || isDeveloper() ||
+        moodId.matches(request.auth.uid + '_.*') ||
+        (resource != null && isParentOf(resource.data.userId))
+      );
+      allow create: if isSignedIn() && isStudent() &&
+                      isOwner(request.resource.data.userId) &&
+                      moodId.matches(request.auth.uid + '_.*');
+      allow update: if ((isTeacher() || isAdmin()) &&
+                      request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['reviewed', 'reviewedBy', 'reviewedAt'])) ||
+                    (isSignedIn() && isStudent() &&
+                      isOwner(resource.data.userId) &&
+                      moodId.matches(request.auth.uid + '_.*') &&
+                      !request.resource.data.diff(resource.data).affectedKeys().hasAny(['reviewed', 'reviewedBy', 'reviewedAt']));
+      allow delete: if isAdmin();
+    }
+    
+    match /announcements/{announcementId} {
+      allow read: if isSignedIn();
+      allow create: if isTeacher() || isAdmin();
+      allow update, delete: if isOwner(resource.data.createdBy) || isAdmin();
+    }
+    
+    match /messages/{messageId} {
+      allow read: if isSignedIn() && 
+                    (isOwner(resource.data.toId) || isOwner(resource.data.fromId) || isAdmin());
+      allow create: if isTeacher() || isAdmin();
+      allow update: if isOwner(resource.data.toId) && 
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if isOwner(resource.data.fromId) || isAdmin();
+    }
+    
+    match /activityLogs/{logId} {
+      allow read: if isSignedIn() && (isOwner(resource.data.userId) || isTeacher() || isAdmin() || isParentOf(resource.data.userId));
+      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+      allow delete: if isAdmin();
+    }
+
+    match /studentActivity/{activityId} {
+      allow read: if isSignedIn() && (isOwner(resource.data.studentId) || isTeacher() || isAdmin() || isParentOf(resource.data.studentId));
+      allow create: if isSignedIn() && isOwner(request.resource.data.studentId);
+    }
+
+    match /analytics/{userId} {
+      allow read: if isOwner(userId) || isTeacher() || isAdmin() || isDeveloper();
+      allow write: if isOwner(userId) || isAdmin() || isDeveloper();
+    }
+
+    match /aiUsage/{userId} {
+      allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    match /gamification/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    match /parents/{parentId} {
+      allow read: if isSignedIn() && (isOwner(parentId) || isAdmin());
+      allow write: if isOwner(parentId) || isAdmin();
+    }
+
+    match /errorLogs/{logId} {
+      allow create: if isSignedIn();
+      allow read, delete: if isAdmin() || isDeveloper();
+    }
+
+    match /challengeProgress/{docId} {
+      allow read: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isTeacher());
+      allow write: if isSignedIn() && (isOwner(request.resource.data.userId) || isAdmin());
+    }
+
+    match /userBadges/{docId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+      allow write: if isAdmin();
+    }
+
+    match /revisionSchedule/{docId} {
+      allow read: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
+      allow write: if isSignedIn() && (isOwner(request.resource.data.userId) || isOwner(resource.data.userId) || isAdmin());
+    }
+
+    match /forumPosts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+    }
+
+    match /knowledge_base/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isDeveloper();
+    }
+
+    match /suggested_faqs/{faqId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin() || isDeveloper();
+    }
+
+    match /videoActivityLogs/{logId} {
+      allow read: if isSignedIn() && (isOwner(resource.data.studentId) || isParentOf(resource.data.studentId) || isTeacher() || isAdmin());
+      allow create: if isSignedIn() && isOwner(request.resource.data.studentId);
+    }
+
+    match /teacherLessons/{lessonId} {
+      allow read: if isSignedIn();
+      allow create: if isTeacher() && isOwner(request.resource.data.teacherId);
+      allow update: if (isTeacher() && isOwner(resource.data.teacherId)) || isAdmin();
+      allow delete: if (isTeacher() && isOwner(resource.data.teacherId)) || isAdmin();
+    }
+
+    match /teacherNotes/{noteId} {
+      allow read: if isSignedIn();
+      allow write: if isTeacher() || isAdmin();
+    }
+
+    match /quizBans/{userId} {
+      allow read: if isSignedIn() && (isOwner(userId) || isTeacher() || isAdmin());
+      allow write: if isTeacher() || isAdmin();
+    }
+
+    match /discussions/{msgId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (isOwner(resource.data.authorId) || isAdmin());
+    }
+
+    match /meetings/{meetingId} {
+      allow read: if isSignedIn() && (isOwner(resource.data.teacherId) || isOwner(resource.data.parentId) || isAdmin());
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (isOwner(resource.data.teacherId) || isOwner(resource.data.parentId) || isAdmin());
+      allow delete: if isAdmin();
+    }
+    
+    match /feedback/{feedbackId} {
+      allow read: if isTeacher() || isAdmin();
+      allow create: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // Platform-wide system flags (maintenance mode, feature toggles).
+    //   • Any signed-in user can READ — the maintenance gate runs on
+    //     every dashboard to decide whether to show the banner or the
+    //     actual UI, so all roles need read access.
+    //   • Only the DEVELOPER can WRITE — flipping maintenance mode is
+    //     a developer-only action and the toggle lives in the
+    //     developer console.
+    match /systemConfig/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isDeveloper();
+    }
+
+    // Student AI chat history — owner-only, used for cross-device sync.
+    // Doc ID format: {userId}_{sessionId} (set by saveChatSession in
+    // services/firestoreService.js). The doc also carries userId on the body.
+    match /studentChats/{chatId} {
+      allow read, write: if isSignedIn() && (
+        chatId.matches(request.auth.uid + '_.*') ||
+        (resource != null && resource.data.userId == request.auth.uid) ||
+        (request.resource != null && request.resource.data.userId == request.auth.uid)
+      );
+      allow read: if isAdmin() || isDeveloper();
+    }
+
+    // Daily AI chat limit usage tracking — owner-only to prevent tampering.
+    // Doc ID format: {userId}_{dateString}
+    match /aiChatUsage/{docId} {
+      allow read, write: if isSignedIn() && (
+        docId.matches(request.auth.uid + '_.*') ||
+        (resource != null && resource.data.userId == request.auth.uid) ||
+        (request.resource != null && request.resource.data.userId == request.auth.uid)
+      );
+    }
+
+    // Simulation Lab Assignments
+    match /simulationAssignments/{assignmentId} {
+      allow read: if isSignedIn();
+      allow write: if isTeacher() || isAdmin() || isDeveloper();
+    }
+
+    // Simulation Lab Submissions
+    match /simulationSubmissions/{submissionId} {
+      allow read: if isSignedIn() && (
+        isOwner(resource.data.studentId) ||
+        isTeacher() ||
+        isAdmin() ||
+        isDeveloper()
+      );
+      allow create: if isSignedIn() && isOwner(request.resource.data.studentId);
+      allow update: if isSignedIn() && (
+        isOwner(resource.data.studentId) ||
+        isTeacher() ||
+        isAdmin() ||
+        isDeveloper()
+      );
+      allow delete: if isTeacher() || isAdmin() || isDeveloper();
+    }
+
+    match /demoRequests/{requestId} {
+      allow create: if true; // Allow public/visitors to book a demo
+      allow read, update, delete: if isSignedIn() && (getUserRole() in ['admin', 'principal', 'developer']);
+    }
+
+    // --- GLOBAL ADMINISTRATIVE POLICY ---
+    // Matches any remaining paths not explicitly covered above
+    match /{path=**} {
+      // Allow full access for admins/developers, but default to CLOSED for others
+      allow read, write: if isSignedIn() && (getUserRole() in ['admin', 'principal', 'developer']);
+    }
+  }
+}
+

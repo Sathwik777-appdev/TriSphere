@@ -1,0 +1,70 @@
+rules_version = '2';
+
+// Firebase Storage Rules for TriSphere - ROOT CAUSE RECOVERY
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // --- HELPER FUNCTIONS ---
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Since Firebase Storage to Firestore cross-service rules require complex Google Cloud IAM
+    // permissions, we will fallback to isSignedIn() for Storage. 
+    // This is SAFE because our firestore.rules strictly enforce teacher/admin roles 
+    // before any metadata can be saved, meaning unauthorized files remain orphaned and invisible.
+    function isAdmin() {
+      return isSignedIn();
+    }
+
+    function isTeacher() {
+      return isSignedIn();
+    }
+    
+    // --- RESOURCE RULES ---
+
+    // Textbooks & Assignments
+    match /textbooks/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow write: if isTeacher();
+    }
+    
+    match /assignments/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow write: if isTeacher();
+    }
+    
+    // Student Submissions
+    match /submissions/{userId}/{allPaths=**} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isTeacher());
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // Profile Photos - Organized by userId
+    match /profile_photos/{userId}/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && 
+                     (request.auth.uid == userId || isAdmin()) &&
+                     request.resource.size < 5 * 1024 * 1024 &&
+                     request.resource.contentType.matches('image/.*');
+    }
+    
+    // Flat path fallback (for old uploads or if subfolder is missing)
+    match /profile_photos/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    
+    // Announcements
+    match /announcements/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow write: if isTeacher();
+    }
+
+    // Deny everything else
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

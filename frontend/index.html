@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#020205" />
+  <meta name="description" content="TriSphere - AI-powered educational platform for students, teachers, and parents" />
+  <!-- Mobile-specific optimizations -->
+  <!-- Stops Android Chrome auto-styling phone numbers as tap-to-call links
+       (which can break our brand-coloured numbers in stat cards). -->
+  <meta name="format-detection" content="telephone=no" />
+  <!-- iOS Safari status-bar style + full-screen capable when added to
+       home screen — gives the PWA a native-app feel on iPhones. -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TriSphere" />
+  <!-- Tell mobile browsers the page is mobile-optimised. Most respect this
+       to disable the legacy "desktop-site override" overlay on first load. -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="HandheldFriendly" content="true" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://trisphere-4b121.web.app/">
+  <meta property="og:title" content="TriSphere - AI-Powered School Dashboard">
+  <meta property="og:description" content="Join the future of education with TriSphere. AI-powered tools, gamified learning, and seamless teacher-parent-student connectivity.">
+  <meta property="og:image" content="https://trisphere-4b121.web.app/logo.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://trisphere-4b121.web.app/">
+  <meta property="twitter:title" content="TriSphere - AI-Powered School Dashboard">
+  <meta property="twitter:description" content="Join the future of education with TriSphere. AI-powered tools, gamified learning, and seamless teacher-parent-student connectivity.">
+  <meta property="twitter:image" content="https://trisphere-4b121.web.app/logo.png">
+
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-apple-180.png" />
+  <!-- Preload the splash logo so it's already cached before React boots —
+       eliminates the "logo pops in late" feel on the first paint. -->
+  <link rel="preload" as="image" href="/loading-logo.png" fetchpriority="high" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Product+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <title>TriSphere - AI-Powered School Dashboard</title>
+</head>
+
+<body style="margin: 0; background: #020205; min-height: 100vh;">
+  <div id="root">
+    <!-- Loading fallback while JS loads -->
+    <div
+      style="display: flex; justify-content: space-between; align-items: center; min-height: 100vh; color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; flex-direction: column; box-sizing: border-box; padding-top: 80px; padding-bottom: 40px; background: linear-gradient(135deg, #020205 0%, #04060d 50%, #000000 100%);">
+      
+      <!-- Top spacer to match layout of AppLoader -->
+      <div style="flex: 1;"></div>
+      
+      <!-- Logo and message -->
+      <div style="display: flex; flex-direction: column; align-items: center; flex-shrink: 0;">
+        <img src="/loading-logo.png" alt="Loading..."
+          style="width: 200px; height: 200px; object-fit: contain; animation: pulse 2.5s ease-in-out infinite; filter: drop-shadow(0 0 14px rgba(139, 92, 246, 0.4)) drop-shadow(0 0 32px rgba(20, 184, 166, 0.2)); border-radius: 12px;" />
+        <p style="margin: 24px 0 0 0; font-size: 16px; font-weight: 500; letter-spacing: 0.3px; color: rgba(255, 255, 255, 0.9); opacity: 0.8;">
+          Initializing TriSphere...
+        </p>
+      </div>
+
+      <!-- Footer to match layout of AppLoader -->
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 8px; width: 100%; margin-top: 24px;">
+        <span style="color: rgba(255, 255, 255, 0.4); font-size: 11px; text-transform: uppercase; letter-spacing: 2px;">Powered by</span>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="/yugnext-logo.png" alt="Yugnext-AI" style="width: 40px; height: 40px; border-radius: 10px;" />
+          <span style="font-size: 22px; font-weight: 700; background: linear-gradient(135deg, #ffd700, #ffb700); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 1px;">Yugnext-AI</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <noscript>
+    <div
+      style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #020205; color: white; font-family: sans-serif; text-align: center; padding: 20px;">
+      <div>
+        <h1>⚠️ JavaScript Required</h1>
+        <p>Please enable JavaScript to use TriSphere.</p>
+      </div>
+    </div>
+  </noscript>
+  <script type="module" src="/src/main.jsx"></script>
+
+  <!-- Permanent reCAPTCHA container to prevent React unmount crashes -->
+  <div id="recaptcha-verifier-container"></div>
+
+  <style>
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+      }
+    }
+  </style>
+</body>
+
+</html>
