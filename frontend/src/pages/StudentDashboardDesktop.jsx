@@ -32,7 +32,7 @@ import { AchievementBadges } from '../components/AchievementBadges';
 import { Leaderboard } from '../components/Leaderboard';
 import { DailyChallenges } from '../components/DailyChallenges';
 import { RewardsStore } from '../components/RewardsStore';
-import { StudyPath } from '../components/StudyPath';
+
 import { RevisionReminder } from '../components/RevisionReminder';
 import { ProfilePhoto } from '../components/ProfilePhoto';
 import { AccountSettings } from '../components/AccountSettings';
@@ -698,7 +698,7 @@ export const StudentDashboard = () => {
     { id: 'quiz', label: 'Quizzes', icon: <QuizIcon size={18} color="currentColor" /> },
     { id: 'assignments', label: 'Assignment', icon: <AssignmentIcon size={18} color="currentColor" /> },
     { id: 'grades', label: 'My Grades', icon: <TargetIcon size={18} color="currentColor" /> },
-    { id: 'studypath', label: 'Study Path', icon: <BookIcon size={18} color="currentColor" /> },
+
     { id: 'achievements', label: 'Achievements', icon: <TargetIcon size={18} color="currentColor" /> },
     { id: 'leaderboard', label: 'Leaderboard', icon: <TargetIcon size={18} color="currentColor" /> },
     { id: 'challenges', label: 'Challenges', icon: <FireIcon size={18} color="currentColor" /> },
@@ -859,12 +859,7 @@ export const StudentDashboard = () => {
             <RewardsStore />
           </ErrorBoundary>
         );
-      case 'studypath':
-        return (
-          <ErrorBoundary mini context="Study Path">
-            <StudyPath selectedSubject={selectedSubject} />
-          </ErrorBoundary>
-        );
+
       default:
         return (
           <div style={{

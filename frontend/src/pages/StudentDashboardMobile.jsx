@@ -50,7 +50,7 @@ import AchievementBadges from '../components/AchievementBadges';
 import Leaderboard from '../components/Leaderboard';
 import TodoPanel from '../components/TodoPanel';
 import GradedAssignments from '../components/GradedAssignments';
-import StudyPath from '../components/StudyPath';
+
 import RevisionReminder from '../components/RevisionReminder';
 import DailyChallenges from '../components/DailyChallenges';
 import { ToolsPanel } from '../components/ToolsPanel';
@@ -548,7 +548,7 @@ export default function StudentDashboardMobile() {
   // alive (just hidden) so coming back is instant with no refetch / no
   // reload of the underlying child components.
   useEffect(() => {
-    const primary = ['home', 'learn', 'lernix', 'progress', 'more'];
+    const primary = ['home', 'learn', 'lernix', 'more'];
     if (primary.includes(activeTab) && !mountedTabs.has(activeTab)) {
       setMountedTabs(prev => new Set([...prev, activeTab]));
     }
@@ -820,7 +820,7 @@ export default function StudentDashboardMobile() {
         tabs={[
           { key: 'achievements', label: 'Badges', icon: <SparklesIcon size={16} color="currentColor" /> },
           { key: 'challenges',   label: 'Challenges', icon: <FireIcon size={16} color="currentColor" /> },
-          { key: 'studypath',    label: 'Study path', icon: <ProgressIcon size={16} color="currentColor" /> },
+
         ]}
       />
 
@@ -843,15 +843,7 @@ export default function StudentDashboardMobile() {
             </GlassCard>
           </motion.div>
         )}
-        {progressSubtab === 'studypath' && (
-          <motion.div key="path" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            <GlassCard padding={0}>
-              <ErrorBoundary mini context="Study Path">
-                <StudyPath selectedSubject={selectedSubject || subjects[0] || 'Physics'} />
-              </ErrorBoundary>
-            </GlassCard>
-          </motion.div>
-        )}
+
 
       </AnimatePresence>
     </motion.div>
@@ -861,6 +853,13 @@ export default function StudentDashboardMobile() {
     <motion.div key="more" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
       <SectionHead title="Quick actions" />
       <div style={S.actionGrid}>
+        <ActionTile
+          icon={<ProgressIcon size={22} color={C.teal} />}
+          tint={G.statTeal}
+          label="Progress"
+          desc="Badges & challenges"
+          onClick={() => setActiveTab('more-progress')}
+        />
         <ActionTile
           icon={<TargetIcon size={22} color={C.purple} />}
           tint={G.statPurple}
@@ -909,6 +908,13 @@ export default function StudentDashboardMobile() {
   );
 
   // Sub-pages inside More — each is just a different value of activeTab
+  const renderMoreProgress = () => (
+    <motion.div key="mr-progress" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+      <BackChip onClick={() => setActiveTab('more')} label="Back to more" />
+      {renderProgress()}
+    </motion.div>
+  );
+
   const renderMoreRewards = () => (
     <motion.div key="mr-rewards" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
       <BackChip onClick={() => setActiveTab('more')} label="Back to more" />
@@ -1403,11 +1409,7 @@ export default function StudentDashboardMobile() {
               <LernixAIChatMobile onBack={() => setActiveTab('home')} />
             </div>
           )}
-          {mountedTabs.has('progress') && (
-            <div style={{ display: activeTab === 'progress' ? 'block' : 'none' }}>
-              {renderProgress()}
-            </div>
-          )}
+
           {mountedTabs.has('more') && (
             <div style={{ display: activeTab === 'more' ? 'block' : 'none' }}>
               {renderMore()}
@@ -1418,6 +1420,7 @@ export default function StudentDashboardMobile() {
               leave) since they're deep-link views the user enters from the
               More grid. Re-mounting on each visit means fresh leaderboard /
               rewards data, which is the right behaviour for those views. */}
+          {activeTab === 'more-progress'     && renderMoreProgress()}
           {activeTab === 'more-rewards'      && renderMoreRewards()}
           {activeTab === 'more-tools'        && renderMoreTools()}
           {activeTab === 'more-leaderboard'  && renderMoreLeaderboard()}
@@ -1457,12 +1460,7 @@ export default function StudentDashboardMobile() {
           active={activeTab === 'lernix'}
           onClick={() => setActiveTab('lernix')}
         />
-        <NavItem
-          icon={<ProgressIcon size={20} color="currentColor" />}
-          label="Progress"
-          active={activeTab === 'progress'}
-          onClick={() => setActiveTab('progress')}
-        />
+
         <NavItem
           icon={<ChevronRightIcon size={20} color="currentColor" />}
           label="More"
