@@ -11,6 +11,7 @@ import { safeLocalStorage } from '../utils/storage';
 import { warningToast, successToast } from '../utils/toast';
 import { jsPDF } from 'jspdf';
 import { QAForum } from './QAForum';
+import { speak, stopSpeaking } from '../utils/browserTTS';
 
 export const MyNotes = ({ selectedSubject }) => {
   const { userData, user } = useAuth();
@@ -31,7 +32,6 @@ export const MyNotes = ({ selectedSubject }) => {
   // Text-to-Speech state
   const [speaking, setSpeaking] = useState(false);
   const [currentSpeakingId, setCurrentSpeakingId] = useState(null);
-  const speechSynthesisRef = useRef(null);
 
   // Log activity when reading notes
   useEffect(() => {
@@ -301,18 +301,20 @@ export const MyNotes = ({ selectedSubject }) => {
   };
 
   // Text-to-Speech functions
-  const handleSpeak = (text, noteId) => {
+  const handleSpeak = async (text, noteId) => {
     if (!text) return;
 
-    // Stop current speech if any
-    if (speechSynthesisRef.current) {
-      window.speechSynthesis.cancel();
-      if (currentSpeakingId === noteId) {
-        setSpeaking(false);
-        setCurrentSpeakingId(null);
-        return;
-      }
+    if (currentSpeakingId === noteId && speaking) {
+      stopSpeaking();
+      setSpeaking(false);
+      setCurrentSpeakingId(null);
+      return;
     }
+
+    // Stop any current speech
+    stopSpeaking();
+    setSpeaking(true);
+    setCurrentSpeakingId(noteId);
 
     // Clean text from markdown and special characters
     const cleanText = text
@@ -324,49 +326,16 @@ export const MyNotes = ({ selectedSubject }) => {
       .replace(/\n\n/g, '. ') // Replace double line breaks with periods
       .replace(/\n/g, ' '); // Replace single line breaks with spaces
 
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-    utterance.lang = 'en-IN'; // Indian English
+    // Use our safe robust wrapper instead of direct SpeechSynthesisUtterance
+    await speak(cleanText, { rate: 0.9, preferFemale: true });
 
-    // Try to select Indian English voice if available
-    const voices = window.speechSynthesis.getVoices();
-    const indianVoice = voices.find(voice =>
-      voice.lang === 'en-IN' ||
-      voice.lang.startsWith('en-IN') ||
-      voice.name.toLowerCase().includes('india')
-    );
-    if (indianVoice) {
-      utterance.voice = indianVoice;
-    }
-
-    utterance.onstart = () => {
-      setSpeaking(true);
-      setCurrentSpeakingId(noteId);
-    };
-
-    utterance.onend = () => {
-      setSpeaking(false);
-      setCurrentSpeakingId(null);
-    };
-
-    utterance.onerror = () => {
-      setSpeaking(false);
-      setCurrentSpeakingId(null);
-    };
-
-    speechSynthesisRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
+    setSpeaking(false);
+    setCurrentSpeakingId(null);
   };
 
   // Cleanup speech on unmount
   useEffect(() => {
-    return () => {
-      if (speechSynthesisRef.current) {
-        window.speechSynthesis.cancel();
-      }
-    };
+    return () => stopSpeaking();
   }, []);
 
   const handleDownloadPDF = (note, e) => {
