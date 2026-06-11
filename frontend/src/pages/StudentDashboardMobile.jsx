@@ -854,8 +854,8 @@ export default function StudentDashboardMobile() {
       <SectionHead title="Quick actions" />
       <div style={S.actionGrid}>
         <ActionTile
-          icon={<ProgressIcon size={22} color={C.teal} />}
-          tint={G.statTeal}
+          icon={<ProgressIcon size={22} color={C.success} />}
+          tint="linear-gradient(135deg, rgba(16, 185, 129, 0.20), rgba(5, 150, 105, 0.04))"
           label="Progress"
           desc="Badges & challenges"
           onClick={() => setActiveTab('more-progress')}
