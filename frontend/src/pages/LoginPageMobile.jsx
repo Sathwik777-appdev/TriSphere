@@ -5,6 +5,9 @@ import { loginUser } from '../services/authService';
 import { successToast, errorToast } from '../utils/toast';
 import { validateEmail } from '../utils/validation';
 import { useAuth } from '../hooks/useAuth';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
 /**
  * TRISPHERE — Mobile Login (reference-matched build)
@@ -41,6 +44,9 @@ export const LoginPageMobile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      Haptics.impact({ style: ImpactStyle.Light });
+    } catch (err) {}
     const tEmail = email.trim();
     const tPass = password.trim();
     const v = validateEmail(tEmail);
@@ -209,24 +215,30 @@ export const LoginPageMobile = () => {
             <img src="/yugnext-logo.png" alt="Yugnext-AI" style={S.yugnextLogo} />
             <span style={S.yugnextName}>Yugnext-AI</span>
           </div>
-          <p style={S.footerLine}>
-            Visit:{' '}
-            <a
-              href="https://www.yugnext-ai.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => {
-                e.preventDefault();
-                window.open('https://www.yugnext-ai.com', '_blank', 'noopener,noreferrer');
-              }}
-              style={S.footerLink}
-            >
-              www.yugnext-ai.com
-            </a>
-          </p>
-          <p style={S.footerLine}>
-            Contact: <a href="mailto:contact@yugnext-ai.com" style={S.footerLink}>contact@yugnext-ai.com</a>
-          </p>
+          <div style={{ padding: '10px 0' }}>
+            <p style={{ ...S.footerLine, marginBottom: '12px' }}>
+              Visit:{' '}
+              <a
+                href="https://www.yugnext-ai.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  if (Capacitor.isNativePlatform()) {
+                      await Browser.open({ url: 'https://www.yugnext-ai.com' });
+                  } else {
+                      window.open('https://www.yugnext-ai.com', '_blank', 'noopener,noreferrer');
+                  }
+                }}
+                style={{ ...S.footerLink, padding: '10px' }}
+              >
+                www.yugnext-ai.com
+              </a>
+            </p>
+            <p style={{ ...S.footerLine, marginTop: '12px' }}>
+              Contact: <a href="mailto:contact@yugnext-ai.com" style={{ ...S.footerLink, padding: '10px' }}>contact@yugnext-ai.com</a>
+            </p>
+          </div>
         </div>
       </motion.div>
     </div>

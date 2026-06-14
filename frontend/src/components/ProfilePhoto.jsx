@@ -46,6 +46,7 @@ export const ProfilePhoto = ({ size = 80, editable = true, userData: passedUserD
     const [photoUrl, setPhotoUrl] = useState(userData?.photoUrl || null);
     const [equippedFrame, setEquippedFrame] = useState(null);
     const [equippedFrameId, setEquippedFrameId] = useState(null);
+    const [equippedAvatar, setEquippedAvatar] = useState(null);
     const fileInputRef = useRef(null);
 
     // Fetch equipped frame
@@ -93,6 +94,14 @@ export const ProfilePhoto = ({ size = 80, editable = true, userData: passedUserD
                             setEquippedFrame(FRAME_IMAGES[frameId]);
                             setEquippedFrameId(frameId);
                         }
+                    }
+
+                    // Handle Avatar
+                    const avatarId = data.equippedItems?.avatar;
+                    if (avatarId && AVATAR_IMAGES[avatarId]) {
+                        setEquippedAvatar(AVATAR_IMAGES[avatarId]);
+                    } else {
+                        setEquippedAvatar(null);
                     }
                 }
             } catch (error) {
@@ -234,6 +243,18 @@ export const ProfilePhoto = ({ size = 80, editable = true, userData: passedUserD
                                 ...styles.photo,
                                 width: '100%',
                                 height: '100%'
+                            }}
+                        />
+                    ) : equippedAvatar ? (
+                        <img
+                            src={equippedAvatar}
+                            alt="Avatar"
+                            style={{
+                                ...styles.photo,
+                                objectFit: 'contain',
+                                width: '100%',
+                                height: '100%',
+                                background: '#1e293b' // Give it a dark background since it's a transparent PNG
                             }}
                         />
                     ) : (

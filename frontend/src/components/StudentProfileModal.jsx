@@ -63,18 +63,19 @@ export const StudentProfileModal = ({ student, onClose }) => {
     return (
         <div style={styles.overlay} onClick={onClose}>
             <div className="profile-modal" style={styles.modal} onClick={e => e.stopPropagation()}>
-                {/* Advanced Mesh Banner */}
+                {/* Advanced Premium Banner */}
                 <div style={styles.banner}>
                     <div style={styles.bannerMesh} />
                     <div style={styles.bannerGlass} />
+                    
                     <div 
                         style={styles.closeBtn} 
                         onClick={onClose}
                         role="button"
-                        aria-label="Close Profile"
                     >
-                        <CloseIcon size={20} color="#fff" />
+                        <CloseIcon size={24} color="#ffffff" />
                     </div>
+                    
                     <div style={styles.schoolBadge}>
                         <span style={styles.schoolIcon}>🏫</span>
                         <span style={styles.schoolName}>{student.schoolName || 'Trinity Central Academy'}</span>
@@ -85,7 +86,9 @@ export const StudentProfileModal = ({ student, onClose }) => {
                     <div style={styles.photoWrapper}>
                         <div style={styles.photoGlow} />
                         <div style={styles.photoRing}>
-                            <ProfilePhoto size={140} editable={false} userData={student} uid={student.id} />
+                            <div style={styles.photoInner}>
+                                <ProfilePhoto size={130} editable={false} userData={student} uid={student.id} />
+                            </div>
                         </div>
                         <div style={styles.levelIndicator}>
                             <span style={styles.levelTitle}>LVL</span>
@@ -98,29 +101,38 @@ export const StudentProfileModal = ({ student, onClose }) => {
                             <h2 style={styles.username}>@{student.username}</h2>
                             <VerifiedBadge />
                         </div>
-                        <p style={styles.statusText}>Official Student • Verified Profile</p>
+                        <p style={styles.statusText}>
+                            <span style={styles.roleText}>{student.role === 'developer' ? 'Developer' : 'Student'}</span> 
+                            <span style={styles.dotSeparator}>•</span> 
+                            {student.schoolName}
+                        </p>
                     </div>
 
                     <div style={styles.badgeGrid}>
                         <div style={styles.pillBadge}>
                             <span style={styles.pillIcon}>🎓</span>
-                            Class {student.class}
+                            Class {student.class || 'N/A'}
                         </div>
-                        <div style={{ ...styles.pillBadge, ...styles.pillBadgeAccent }}>
-                            <span style={styles.pillIcon}>🎖️</span>
-                            Master Scholar
-                        </div>
+                        {((userData?.badges || student?.badges || []).length > 0) && (
+                            <div style={styles.pillBadgeAccent}>
+                                <span style={styles.pillIcon}>🎖️</span>
+                                {Object.values(BADGES).find(b => (userData?.badges || student?.badges || []).includes(b.id))?.name || 'Scholar'}
+                            </div>
+                        )}
                     </div>
 
-                    {/* Pro XP Rail */}
+                    {/* Premium XP Rail */}
                     <div style={styles.xpRailContainer}>
                         <div style={styles.xpLabelRow}>
-                            <span style={styles.xpTextTitle}>EXPERIENCE POINTS</span>
-                            <span style={styles.xpValueText}>{currentXp} / 1000 XP</span>
+                            <span style={styles.xpTextTitle}>EXPERIENCE</span>
+                            <span style={styles.xpValueText}>
+                                <strong style={{color: '#fff'}}>{currentXp}</strong> / 1000 XP
+                            </span>
                         </div>
                         <div style={styles.xpRailBg}>
                             <div style={{ ...styles.xpRailFill, width: `${progressToNextLevel}%` }}>
                                 <div style={styles.xpRailGlow} />
+                                <div style={styles.xpRailThumb} />
                             </div>
                         </div>
                     </div>
@@ -128,18 +140,18 @@ export const StudentProfileModal = ({ student, onClose }) => {
 
                 <div style={styles.body}>
                     <div className="stats-layout" style={styles.statsLayout}>
-                        <div style={styles.statCardRefined}>
-                            <div style={styles.statIconBox}>
-                                <FireIcon size={22} color="#f97316" />
+                        <div style={styles.statCardGlass}>
+                            <div style={{...styles.statIconBox, background: 'rgba(249, 115, 22, 0.15)', borderColor: 'rgba(249, 115, 22, 0.3)'}}>
+                                <FireIcon size={24} color="#f97316" />
                             </div>
                             <div style={styles.statInfo}>
                                 <div style={styles.statValLarge}>{storeData?.xpBalance?.toLocaleString() || 0}</div>
-                                <div style={styles.statLabelSmall}>LIFE-TIME XP</div>
+                                <div style={styles.statLabelSmall}>LIFETIME XP</div>
                             </div>
                         </div>
-                        <div style={{ ...styles.statCardRefined, ...styles.statCardPurple }}>
-                            <div style={styles.statIconBox}>
-                                <TargetIcon size={22} color="#8b5cf6" />
+                        <div style={styles.statCardGlass}>
+                            <div style={{...styles.statIconBox, background: 'rgba(139, 92, 246, 0.15)', borderColor: 'rgba(139, 92, 246, 0.3)'}}>
+                                <TargetIcon size={24} color="#a78bfa" />
                             </div>
                             <div style={styles.statInfo}>
                                 <div style={styles.statValLarge}>{ownedAvatars.length}</div>
@@ -151,10 +163,10 @@ export const StudentProfileModal = ({ student, onClose }) => {
                     <div style={styles.inventorySection}>
                         <div style={styles.sectionHeading}>
                             <h3 style={styles.sectionTitleRefined}>
-                                <span style={styles.sectionTitleIcon}>🏛️</span>
+                                <span style={styles.sectionTitleIcon}>✨</span>
                                 Avatar Inventory
                             </h3>
-                            <div style={styles.inventoryCount}>{ownedAvatars.length} items</div>
+                            <div style={styles.inventoryCount}>{ownedAvatars.length} ITEMS</div>
                         </div>
 
                         <div style={styles.inventoryShelf}>
@@ -189,14 +201,14 @@ export const StudentProfileModal = ({ student, onClose }) => {
                         </div>
                     </div>
 
-                    <div style={{ ...styles.inventorySection, marginTop: '24px' }}>
+                    <div style={{ ...styles.inventorySection, marginTop: '28px' }}>
                         <div style={styles.sectionHeading}>
                             <h3 style={styles.sectionTitleRefined}>
                                 <span style={styles.sectionTitleIcon}>🏆</span>
                                 Achievement Badges
                             </h3>
                             <div style={styles.inventoryCount}>
-                                {(userData?.badges || student?.badges || []).length} / {Object.keys(BADGES).length} unlocked
+                                {(userData?.badges || student?.badges || []).length} / {Object.keys(BADGES).length} UNLOCKED
                             </div>
                         </div>
 
@@ -211,22 +223,23 @@ export const StudentProfileModal = ({ student, onClose }) => {
                                             style={{
                                                 ...styles.badgeCard,
                                                 ...(isUnlocked ? {
-                                                    border: `1px solid ${badge.color}60`,
-                                                    background: `linear-gradient(135deg, ${badge.color}15, rgba(15, 23, 42, 0.4))`
+                                                    border: `1px solid ${badge.color}50`,
+                                                    background: `linear-gradient(145deg, rgba(30, 41, 59, 0.4), ${badge.color}15)`,
+                                                    boxShadow: `inset 0 0 20px ${badge.color}05`
                                                 } : styles.badgeCardLocked)
                                             }}
                                         >
                                             <div style={{
                                                 ...styles.badgeIcon,
-                                                textShadow: isUnlocked ? `0 0 15px ${badge.color}` : 'none',
-                                                opacity: isUnlocked ? 1 : 0.25,
+                                                textShadow: isUnlocked ? `0 0 20px ${badge.color}80` : 'none',
+                                                opacity: isUnlocked ? 1 : 0.15,
                                                 filter: isUnlocked ? 'none' : 'grayscale(100%)'
                                             }}>
                                                 {badge.icon}
                                             </div>
                                             <div style={{
                                                 ...styles.badgeNameTag,
-                                                color: isUnlocked ? '#f1f5f9' : '#475569'
+                                                color: isUnlocked ? '#f8fafc' : '#475569'
                                             }}>
                                                 {badge.name}
                                             </div>
@@ -249,89 +262,89 @@ const styles = {
     overlay: {
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(2, 6, 23, 0.9)',
-        backdropFilter: 'blur(20px)',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        backdropFilter: 'blur(24px) saturate(150%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(150%)',
         zIndex: 2000,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px'
+        padding: '16px'
     },
     modal: {
         width: '100%',
-        maxWidth: '480px',
-        maxHeight: '90vh',
+        maxWidth: '460px',
+        maxHeight: '92vh',
         overflowY: 'auto',
-        backgroundColor: '#0c0e14',
-        borderRadius: '36px',
+        backgroundColor: '#0a0d14',
+        borderRadius: '32px',
         border: '1px solid rgba(255, 255, 255, 0.08)',
-        boxShadow: '0 40px 100px rgba(0, 0, 0, 0.8), 0 0 40px rgba(59, 130, 246, 0.1)',
+        boxShadow: '0 25px 80px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
         position: 'relative',
-        animation: 'masterEntrance 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)'
+        animation: 'masterEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
     },
     banner: {
-        height: '160px',
+        height: '180px',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        borderTopLeftRadius: '32px',
+        borderTopRightRadius: '32px',
     },
     bannerMesh: {
         position: 'absolute',
         inset: 0,
-        background: 'linear-gradient(135deg, #1e3a8a 0%, #312e81 25%, #4c1d95 50%, #7c3aed 75%, #db2714 100%)',
-        backgroundSize: '400% 400%',
-        animation: 'meshMove 15s ease infinite',
-        opacity: 0.8
+        background: 'linear-gradient(120deg, #0f172a 0%, #1e1b4b 30%, #312e81 60%, #1e1b4b 100%)',
+        backgroundSize: '200% 200%',
+        animation: 'meshMove 20s ease infinite',
+        opacity: 1
     },
     bannerGlass: {
         position: 'absolute',
         inset: 0,
-        background: 'linear-gradient(to bottom, rgba(12, 14, 20, 0) 0%, rgba(12, 14, 20, 0.8) 100%)'
+        background: 'linear-gradient(to bottom, rgba(10, 13, 20, 0) 0%, rgba(10, 13, 20, 1) 100%)'
     },
     closeBtn: {
         position: 'absolute',
         top: '20px',
         right: '20px',
-        background: 'rgba(255, 255, 255, 0.1)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
-        borderRadius: '14px',
-        width: '40px',
-        height: '40px',
+        background: 'transparent',
+        border: 'none',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
         zIndex: 20,
-        transition: 'all 0.3s ease',
-        color: '#fff'
+        color: 'rgba(255,255,255,0.7)',
+        transition: 'color 0.2s',
+        padding: '8px'
     },
     schoolBadge: {
         position: 'absolute',
-        top: '20px',
-        left: '20px',
-        background: 'rgba(255, 255, 255, 0.05)',
-        backdropFilter: 'blur(12px)',
-        padding: '8px 16px',
-        borderRadius: '14px',
+        top: '24px',
+        left: '24px',
+        background: 'rgba(15, 23, 42, 0.4)',
+        backdropFilter: 'blur(16px)',
+        padding: '8px 14px',
+        borderRadius: '12px',
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
         border: '1px solid rgba(255, 255, 255, 0.1)',
-        boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
         zIndex: 10
     },
-    schoolIcon: { fontSize: '14px' },
+    schoolIcon: { fontSize: '13px' },
     schoolName: {
-        color: '#f8fafc',
+        color: '#e2e8f0',
         fontSize: '11px',
         fontWeight: '700',
-        letterSpacing: '0.05em',
+        letterSpacing: '0.06em',
         textTransform: 'uppercase'
     },
     header: {
-        padding: '0 40px 30px',
+        padding: '0 32px 24px',
         textAlign: 'center',
-        marginTop: '-80px'
+        marginTop: '-70px'
     },
     photoWrapper: {
         position: 'relative',
@@ -341,197 +354,248 @@ const styles = {
     },
     photoRing: {
         position: 'relative',
-        padding: '5px',
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.2), transparent)',
+        padding: '6px',
+        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(139, 92, 246, 0.8), rgba(236, 72, 153, 0.8), rgba(59, 130, 246, 0.8))',
+        backgroundSize: '300% 300%',
         borderRadius: '50%',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
-        border: '1px solid rgba(255, 255, 255, 0.1)'
+        boxShadow: '0 12px 35px rgba(0,0,0,0.5), inset 0 0 0 2px rgba(255,255,255,0.2)',
+        animation: 'gradientSpin 4s ease infinite'
+    },
+    photoInner: {
+        borderRadius: '50%',
+        background: '#0a0d14',
+        padding: '4px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
     },
     photoGlow: {
         position: 'absolute',
-        inset: '-10px',
-        background: 'radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%)',
+        inset: '-20px',
+        background: 'radial-gradient(circle, rgba(99, 102, 241, 0.4) 0%, transparent 70%)',
         borderRadius: '50%',
-        filter: 'blur(10px)',
+        filter: 'blur(20px)',
         zIndex: -1
     },
     levelIndicator: {
         position: 'absolute',
-        bottom: '8px',
-        right: '8px',
-        background: 'linear-gradient(135deg, #fbbf24, #d97706)',
-        border: '4px solid #0c0e14',
-        width: '42px',
-        height: '42px',
+        bottom: '4px',
+        right: '4px',
+        background: 'linear-gradient(135deg, #f59e0b, #ea580c)',
+        border: '4px solid #0a0d14',
+        width: '44px',
+        height: '44px',
         borderRadius: '50%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.5)',
+        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255,255,255,0.4)',
         zIndex: 6
     },
-    levelTitle: { fontSize: '8px', fontWeight: '900', color: 'rgba(0,0,0,0.6)', lineHeight: 1 },
-    levelNum: { fontSize: '16px', fontWeight: '900', color: '#000', lineHeight: 1 },
-    mainInfo: { marginBottom: '20px' },
+    levelTitle: { fontSize: '8px', fontWeight: '900', color: 'rgba(255,255,255,0.9)', lineHeight: 1, letterSpacing: '0.5px' },
+    levelNum: { fontSize: '18px', fontWeight: '900', color: '#fff', lineHeight: 1, textShadow: '0 2px 4px rgba(0,0,0,0.3)' },
+    mainInfo: { marginBottom: '24px' },
     usernameRow: {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '4px',
-        marginBottom: '4px'
+        gap: '6px',
+        marginBottom: '6px'
     },
     username: {
-        fontSize: '28px',
-        fontWeight: '900',
-        color: '#fff',
+        fontSize: '30px',
+        fontWeight: '800',
+        background: 'linear-gradient(to right, #ffffff, #94a3b8)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
         margin: 0,
-        letterSpacing: '-0.03em'
+        letterSpacing: '-0.02em'
     },
     statusText: {
         fontSize: '13px',
         color: '#64748b',
-        fontWeight: '600',
+        fontWeight: '500',
         margin: 0,
-        opacity: 0.8
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px'
+    },
+    roleText: {
+        color: '#94a3b8',
+        fontWeight: '600'
+    },
+    dotSeparator: {
+        color: '#334155',
+        fontSize: '16px'
     },
     badgeGrid: {
         display: 'flex',
-        gap: '10px',
+        gap: '12px',
         justifyContent: 'center',
-        marginBottom: '24px'
+        marginBottom: '32px'
     },
     pillBadge: {
-        background: 'rgba(255, 255, 255, 0.03)',
-        color: '#94a3b8',
-        padding: '8px 18px',
-        borderRadius: '50px',
-        fontSize: '12px',
-        fontWeight: '700',
+        background: 'rgba(30, 41, 59, 0.6)',
+        backdropFilter: 'blur(8px)',
+        color: '#e2e8f0',
+        padding: '8px 20px',
+        borderRadius: '100px',
+        fontSize: '13px',
+        fontWeight: '600',
         border: '1px solid rgba(255, 255, 255, 0.08)',
         display: 'flex',
         alignItems: 'center',
-        gap: '8px'
+        gap: '8px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
     },
     pillBadgeAccent: {
-        background: 'rgba(59, 130, 246, 0.08)',
-        color: '#60a5fa',
-        border: '1px solid rgba(59, 130, 246, 0.15)'
+        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15))',
+        backdropFilter: 'blur(8px)',
+        color: '#a78bfa',
+        padding: '8px 20px',
+        borderRadius: '100px',
+        fontSize: '13px',
+        fontWeight: '600',
+        border: '1px solid rgba(139, 92, 246, 0.3)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        boxShadow: '0 4px 15px rgba(139, 92, 246, 0.15)'
     },
     xpRailContainer: {
         width: '100%',
-        maxWidth: '320px',
-        margin: '0 auto'
+        maxWidth: '340px',
+        margin: '0 auto',
+        padding: '16px',
+        background: 'rgba(15, 23, 42, 0.4)',
+        borderRadius: '20px',
+        border: '1px solid rgba(255, 255, 255, 0.05)'
     },
     xpLabelRow: {
         display: 'flex',
         justifyContent: 'space-between',
-        fontSize: '9px',
-        fontWeight: '900',
-        color: '#475569',
-        marginBottom: '8px',
-        letterSpacing: '0.15em'
+        fontSize: '10px',
+        fontWeight: '800',
+        color: '#64748b',
+        marginBottom: '10px',
+        letterSpacing: '0.1em'
+    },
+    xpValueText: {
+        color: '#94a3b8',
+        fontFamily: 'monospace',
+        fontSize: '11px'
     },
     xpRailBg: {
-        height: '10px',
-        background: 'rgba(255, 255, 255, 0.03)',
-        borderRadius: '20px',
+        height: '8px',
+        background: '#0f172a',
+        borderRadius: '10px',
         overflow: 'hidden',
-        border: '1px solid rgba(255, 255, 255, 0.05)'
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)'
     },
     xpRailFill: {
         height: '100%',
-        background: 'linear-gradient(to right, #3b82f6, #8b5cf6, #d946ef)',
-        borderRadius: '20px',
+        background: 'linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899)',
+        borderRadius: '10px',
         position: 'relative',
-        transition: 'width 1.2s cubic-bezier(0.4, 0, 0.2, 1)'
+        transition: 'width 1.5s cubic-bezier(0.2, 0.8, 0.2, 1)'
     },
     xpRailGlow: {
         position: 'absolute',
-        top: 0,
-        right: 0,
-        bottom: 0,
-        width: '20px',
-        background: 'rgba(255, 255, 255, 0.3)',
-        filter: 'blur(10px)'
+        inset: 0,
+        background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4))',
+        filter: 'blur(4px)'
     },
-    body: { padding: '0 32px 32px' },
+    xpRailThumb: {
+        position: 'absolute',
+        right: 0,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        width: '12px',
+        height: '12px',
+        background: '#fff',
+        borderRadius: '50%',
+        boxShadow: '0 0 10px rgba(236, 72, 153, 0.8), 0 0 20px rgba(139, 92, 246, 0.6)'
+    },
+    body: { padding: '0 28px 32px' },
     statsLayout: {
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
         gap: '16px',
-        marginBottom: '32px'
+        marginBottom: '36px'
     },
-    statCardRefined: {
-        background: 'rgba(255, 255, 255, 0.02)',
-        padding: '18px',
+    statCardGlass: {
+        background: 'rgba(30, 41, 59, 0.4)',
+        padding: '20px',
         borderRadius: '24px',
-        border: '1px solid rgba(255, 255, 255, 0.06)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
         display: 'flex',
         alignItems: 'center',
-        gap: '14px',
-        transition: 'transform 0.3s ease',
-        '&:hover': { transform: 'translateY(-4px)', background: 'rgba(255, 255, 255, 0.04)' }
-    },
-    statCardPurple: {
-        background: 'rgba(139, 92, 246, 0.02)',
-        border: '1px solid rgba(139, 92, 246, 0.06)'
+        gap: '16px',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)',
+        backdropFilter: 'blur(12px)',
+        transition: 'transform 0.3s ease, background 0.3s ease',
+        '&:hover': { transform: 'translateY(-4px)', background: 'rgba(30, 41, 59, 0.6)' }
     },
     statIconBox: {
-        width: '44px',
-        height: '44px',
+        width: '48px',
+        height: '48px',
         borderRadius: '16px',
-        background: 'rgba(12, 14, 20, 0.8)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        boxShadow: '0 6px 15px rgba(0,0,0,0.3)'
+        border: '1px solid',
+        boxShadow: '0 8px 16px rgba(0,0,0,0.2)'
     },
     statInfo: { display: 'flex', flexDirection: 'column' },
-    statValLarge: { fontSize: '20px', fontWeight: '900', color: '#fff', lineHeight: 1 },
-    statLabelSmall: { fontSize: '10px', color: '#475569', fontWeight: '800', marginTop: '4px', letterSpacing: '0.05em' },
+    statValLarge: { fontSize: '24px', fontWeight: '800', color: '#f8fafc', lineHeight: 1 },
+    statLabelSmall: { fontSize: '10px', color: '#64748b', fontWeight: '700', marginTop: '6px', letterSpacing: '0.08em' },
     inventorySection: { marginTop: '8px' },
     sectionHeading: {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '18px'
+        marginBottom: '20px'
     },
     sectionTitleRefined: {
-        fontSize: '16px',
-        fontWeight: '800',
-        color: '#f1f5f9',
+        fontSize: '17px',
+        fontWeight: '700',
+        color: '#e2e8f0',
         margin: 0,
         display: 'flex',
         alignItems: 'center',
-        gap: '10px'
+        gap: '10px',
+        letterSpacing: '-0.01em'
     },
     inventoryCount: {
-        fontSize: '11px',
-        color: '#64748b',
-        fontWeight: '700',
-        background: 'rgba(255, 255, 255, 0.05)',
-        padding: '4px 12px',
-        borderRadius: '10px',
-        border: '1px solid rgba(255, 255, 255, 0.05)'
+        fontSize: '10px',
+        color: '#94a3b8',
+        fontWeight: '800',
+        background: 'rgba(30, 41, 59, 0.6)',
+        padding: '6px 14px',
+        borderRadius: '12px',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        letterSpacing: '0.05em'
     },
     inventoryShelf: {
-        background: 'rgba(255, 255, 255, 0.01)',
+        background: 'rgba(15, 23, 42, 0.3)',
         borderRadius: '28px',
-        padding: '20px',
-        border: '1px solid rgba(255, 255, 255, 0.04)'
+        padding: '24px',
+        border: '1px solid rgba(255, 255, 255, 0.04)',
+        boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.3)'
     },
     shelfGrid: {
         display: 'grid',
         gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '14px',
-        maxHeight: '220px',
+        gap: '16px',
+        maxHeight: '240px',
         overflowY: 'auto'
     },
     itemCard: {
         aspectRatio: '0.85',
-        background: 'rgba(15, 23, 42, 0.4)',
+        background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.6))',
         borderRadius: '20px',
         padding: '12px',
         display: 'flex',
@@ -539,32 +603,48 @@ const styles = {
         alignItems: 'center',
         justifyContent: 'center',
         border: '1px solid rgba(255, 255, 255, 0.06)',
-        transition: 'all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
-        cursor: 'default',
+        transition: 'all 0.3s ease',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        boxShadow: '0 8px 20px rgba(0,0,0,0.2)'
     },
-    cardQuality_legendary: { border: '1px solid rgba(245, 158, 11, 0.3)', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(15, 23, 42, 0.4))' },
-    cardQuality_epic: { border: '1px solid rgba(168, 85, 247, 0.3)', background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(15, 23, 42, 0.4))' },
-    cardQuality_rare: { border: '1px solid rgba(59, 130, 246, 0.3)', background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(15, 23, 42, 0.4))' },
-    itemImgWrapper: { width: '100%', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' },
-    itemImg: { width: '90%', height: '90%', objectFit: 'contain', filter: 'drop-shadow(0 8px 12px rgba(0, 0, 0, 0.6))' },
+    cardQuality_legendary: { border: '1px solid rgba(245, 158, 11, 0.4)', background: 'linear-gradient(145deg, rgba(245, 158, 11, 0.1), rgba(15, 23, 42, 0.8))' },
+    cardQuality_epic: { border: '1px solid rgba(168, 85, 247, 0.4)', background: 'linear-gradient(145deg, rgba(168, 85, 247, 0.1), rgba(15, 23, 42, 0.8))' },
+    cardQuality_rare: { border: '1px solid rgba(59, 130, 246, 0.4)', background: 'linear-gradient(145deg, rgba(59, 130, 246, 0.1), rgba(15, 23, 42, 0.8))' },
+    itemImgWrapper: { 
+        width: '100%', 
+        flex: 1, 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        position: 'relative',
+        minHeight: '60px' // Ensure it doesn't collapse
+    },
+    itemImg: { 
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%', 
+        height: '100%', 
+        objectFit: 'contain', 
+        filter: 'drop-shadow(0 10px 15px rgba(0, 0, 0, 0.6))' 
+    },
     itemNameTag: {
         fontSize: '9px',
         fontWeight: '800',
-        color: '#64748b',
+        color: '#94a3b8',
         textAlign: 'center',
         textTransform: 'uppercase',
-        letterSpacing: '0.04em',
+        letterSpacing: '0.06em',
         width: '100%',
-        marginTop: '8px'
+        marginTop: '10px'
     },
-    shelfEmpty: { gridColumn: 'span 4', textAlign: 'center', padding: '40px 0', opacity: 0.4 },
-    emptyIconLarge: { fontSize: '32px', marginBottom: '8px' },
-    emptyTextLarge: { fontSize: '13px', fontWeight: '600' },
+    shelfEmpty: { gridColumn: 'span 4', textAlign: 'center', padding: '50px 0', opacity: 0.5 },
+    emptyIconLarge: { fontSize: '36px', marginBottom: '12px' },
+    emptyTextLarge: { fontSize: '14px', fontWeight: '600', color: '#64748b' },
     badgeCard: {
         aspectRatio: '0.85',
-        background: 'rgba(15, 23, 42, 0.4)',
+        background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.6))',
         borderRadius: '20px',
         padding: '12px',
         display: 'flex',
@@ -572,18 +652,19 @@ const styles = {
         alignItems: 'center',
         justifyContent: 'center',
         border: '1px solid rgba(255, 255, 255, 0.06)',
-        transition: 'all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
+        transition: 'all 0.3s ease',
         cursor: 'pointer',
         position: 'relative',
-        overflow: 'visible'
+        boxShadow: '0 8px 20px rgba(0,0,0,0.2)'
     },
     badgeCardLocked: {
-        opacity: 0.4,
-        border: '1px dashed rgba(255, 255, 255, 0.08)'
+        opacity: 0.5,
+        border: '1px dashed rgba(255, 255, 255, 0.1)',
+        background: 'rgba(15, 23, 42, 0.2)'
     },
     badgeIcon: {
-        fontSize: '32px',
-        marginBottom: '8px',
+        fontSize: '34px',
+        marginBottom: '10px',
         transition: 'all 0.3s ease'
     },
     badgeNameTag: {
@@ -591,28 +672,28 @@ const styles = {
         fontWeight: '800',
         textAlign: 'center',
         textTransform: 'uppercase',
-        letterSpacing: '0.04em',
+        letterSpacing: '0.06em',
         width: '100%',
-        marginTop: '4px'
+        marginTop: '6px'
     },
     badgeTooltip: {
         position: 'absolute',
-        bottom: '105%',
+        bottom: '108%',
         left: '50%',
         transform: 'translateX(-50%) translateY(10px)',
         backgroundColor: '#0f172a',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        color: '#94a3b8',
-        padding: '8px 12px',
-        borderRadius: '12px',
-        fontSize: '10px',
+        border: '1px solid rgba(255, 255, 255, 0.15)',
+        color: '#cbd5e1',
+        padding: '10px 14px',
+        borderRadius: '14px',
+        fontSize: '11px',
         fontWeight: '600',
-        width: '160px',
+        width: '180px',
         textAlign: 'center',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+        boxShadow: '0 15px 35px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05)',
         pointerEvents: 'none',
         opacity: 0,
-        transition: 'all 0.2s ease',
+        transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
         zIndex: 50
     }
 };
@@ -626,6 +707,11 @@ if (typeof document !== 'undefined') {
             to { transform: scale(1) translateY(0); opacity: 1; filter: blur(0); }
         }
         @keyframes meshMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes gradientSpin {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }

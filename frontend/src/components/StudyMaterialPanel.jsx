@@ -6,6 +6,7 @@ import { generateStudyMaterial } from '../services/aiService';
 import { setDoc } from 'firebase/firestore';
 import { offlineDB, isOffline } from '../utils/offlineDB';
 import { useOfflineCache } from '../hooks/useOffline';
+import { KeepAwake } from '@capacitor-community/keep-awake';
 
 export const StudyMaterialPanel = ({ textbookId, chapterName, onMaterialGenerated }) => {
   const [loading, setLoading] = useState(false);
@@ -20,6 +21,15 @@ export const StudyMaterialPanel = ({ textbookId, chapterName, onMaterialGenerate
 
   useEffect(() => {
     fetchChapters();
+    
+    // Keep screen awake while studying
+    const lockScreen = async () => {
+      try { await KeepAwake.keepAwake(); } catch (e) {}
+    };
+    lockScreen();
+    return () => {
+      try { KeepAwake.allowSleep(); } catch (e) {}
+    };
   }, []);
 
   useEffect(() => {

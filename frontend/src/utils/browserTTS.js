@@ -1,10 +1,9 @@
 /**
  * browserTTS.js
  * ───────────────────────────────────────────────────────────────────
- * Tiny wrapper around `window.speechSynthesis` that's safe to call from
- * anywhere in the app. Used by ASTRA's voice check-in and the Lernix
- * tutor to replace the ~3-4 second round-trip to Google Cloud TTS
- * with a near-instant on-device synthesis (~100 ms).
+ * Tiny wrapper around `window.speechSynthesis` and Capacitor TextToSpeech.
+ * Safe to call from anywhere in the app.
+ * Uses native TTS on Android/iOS and browser TTS on the web.
  *
  * Why a utility instead of inline calls:
  *   1. Voice loading is asynchronous on first hit — Chrome returns
@@ -17,6 +16,9 @@
  *   3. Cancelling a stale utterance before starting a new one is a
  *      common footgun — `speechSynthesis.speak` queues by default.
  */
+
+import { Capacitor } from '@capacitor/core';
+import { TextToSpeech } from '@capacitor-community/text-to-speech';
 
 let voicesCache = null;
 let voicesPromise = null;
@@ -324,7 +326,31 @@ function speakSentence(sentence, voice, opts) {
  *   - onBoundary: optional callback for word-by-word highlighting
  */
 export async function speak(text, options = {}) {
-    if (!isBrowserTTSAvailable() || !text) {
+    if (!text) {
+        return { ok: false, reason: 'empty' };
+    }
+
+    // Use native Capacitor TTS if running on iOS/Android
+    if (Capacitor.isNativePlatform()) {
+        try {
+            await TextToSpeech.stop();
+            await TextToSpeech.speak({
+                text: text,
+                lang: options.lang || 'en-IN',
+                rate: options.rate || 1.0,
+                pitch: options.pitch || 1.0,
+                volume: options.volume || 1.0,
+                category: 'ambient',
+            });
+            return { ok: true, native: true };
+        } catch (e) {
+            console.error('Native TTS failed:', e);
+            return { ok: false, reason: e.message || 'native_tts_failed' };
+        }
+    }
+
+    // Fallback to Browser TTS
+    if (!isBrowserTTSAvailable()) {
         return { ok: false, reason: 'unavailable' };
     }
 
@@ -401,7 +427,12 @@ export async function speak(text, options = {}) {
 /**
  * Immediately stop any speech in progress. Safe to call at any time.
  */
-export function stopSpeaking() {
+export async function stopSpeaking() {
+    if (Capacitor.isNativePlatform()) {
+        try { await TextToSpeech.stop(); } catch (e) {}
+        return;
+    }
+    
     if (!isBrowserTTSAvailable()) return;
     try { window.speechSynthesis.cancel(); } catch (e) {}
 }

@@ -12,6 +12,8 @@ import {
 import { doc, getDoc, setDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import { safeLocalStorage } from '../utils/storage';
+import { Capacitor } from '@capacitor/core';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 
 
 /**
@@ -65,17 +67,13 @@ export const getUserData = async (uid) => {
  * Setup Recaptcha
  */
 export const setupRecaptcha = (elementId) => {
-  // IGNORE passed elementId, always use the permanent one for stability
+  // Use the permanent container for stability
   const STABLE_ID = 'recaptcha-verifier-container';
 
-  // Clear existing verifier if it exists
+  // If we already have a valid verifier initialized, REUSE IT.
+  // DO NOT clear it. This prevents the "already been rendered" error.
   if (window.recaptchaVerifier) {
-    try {
-      window.recaptchaVerifier.clear();
-    } catch (e) {
-      console.warn('Error clearing existing recaptcha:', e);
-    }
-    window.recaptchaVerifier = null;
+    return window.recaptchaVerifier;
   }
 
   // Check if permanent element exists in DOM
@@ -85,7 +83,8 @@ export const setupRecaptcha = (elementId) => {
     return null;
   }
 
-  // AGGRESSIVE CLEAR: Clear the element's inner HTML to remove any previous reCAPTCHA residues.
+  // Clear innerHTML just in case there is some lingering content, but do not replace the node
+  // replacing the node breaks Firebase's internal element tracking.
   try {
     element.innerHTML = '';
   } catch (e) {
@@ -93,7 +92,7 @@ export const setupRecaptcha = (elementId) => {
   }
 
   try {
-    // We use the STABLE_ID here
+    // Initialize exactly once
     window.recaptchaVerifier = new RecaptchaVerifier(auth, STABLE_ID, {
       'size': 'invisible',
       'callback': (response) => {
@@ -113,8 +112,43 @@ export const setupRecaptcha = (elementId) => {
  */
 export const sendOtp = async (phoneNumber, recaptchaVerifier) => {
   try {
-    const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
-    return confirmationResult;
+    if (Capacitor.isNativePlatform()) {
+      // Use Native Firebase Auth (bypasses reCAPTCHA)
+      return new Promise((resolve, reject) => {
+        let sentListener = null;
+        let failedListener = null;
+
+        const cleanup = () => {
+          if (sentListener) sentListener.remove();
+          if (failedListener) failedListener.remove();
+        };
+
+        const executeNativeAuth = async () => {
+          try {
+            sentListener = await FirebaseAuthentication.addListener('phoneCodeSent', (event) => {
+              cleanup();
+              resolve({ verificationId: event.verificationId, isNative: true });
+            });
+
+            failedListener = await FirebaseAuthentication.addListener('phoneVerificationFailed', (event) => {
+              cleanup();
+              reject(new Error(event.message || 'Phone verification failed'));
+            });
+
+            await FirebaseAuthentication.signInWithPhoneNumber({ phoneNumber });
+          } catch (err) {
+            cleanup();
+            reject(err);
+          }
+        };
+
+        executeNativeAuth();
+      });
+    } else {
+      // Use Web SDK
+      const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
+      return { confirmationResult, isNative: false };
+    }
   } catch (error) {
     console.error('🔥 authService: Error sending OTP:', error);
     console.dir(error);
@@ -125,9 +159,14 @@ export const sendOtp = async (phoneNumber, recaptchaVerifier) => {
 /**
  * Verify OTP and LINK it to existing user
  */
-export const verifyOtpAndLink = async (user, verificationId, otp) => {
+export const verifyOtpAndLink = async (user, verificationData, otp) => {
   try {
-    const credential = PhoneAuthProvider.credential(verificationId, otp);
+    let credential;
+    if (verificationData.isNative) {
+      credential = PhoneAuthProvider.credential(verificationData.verificationId, otp);
+    } else {
+      credential = PhoneAuthProvider.credential(verificationData.confirmationResult.verificationId, otp);
+    }
     await linkWithCredential(user, credential);
     return true;
   } catch (error) {

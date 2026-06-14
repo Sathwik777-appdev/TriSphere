@@ -337,6 +337,18 @@ html, body {
   overscroll-behavior-x: none;
   -webkit-overscroll-behavior-y: none;
   -webkit-overscroll-behavior-x: none;
+
+  /* Native App Feel: Prevent long-press text highlighting and callout menus */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Allow text selection inside forms so typing still works normally, 
+   and anywhere explicitly marked as selectable (like chat messages) */
+input, textarea, select, .selectable-text {
+  -webkit-user-select: auto;
+  user-select: auto;
 }
 
 /* Standard Blue Theme */

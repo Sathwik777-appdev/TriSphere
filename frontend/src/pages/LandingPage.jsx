@@ -16,8 +16,11 @@ if (Capacitor.isNativePlatform()) {
 import { safeLocalStorage } from '../utils/storage';
 import { db } from '../services/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import VideoBackground from '../components/VideoBackground';
+import { useTheme } from '../context/ThemeContext';
 import AnimatedLogo from '../components/AnimatedLogo';
+
+import { Browser } from '@capacitor/browser';
+import VideoBackground from '../components/VideoBackground';
 
 // Inline media-query hook. The page is rendered as a single component with
 // inline `style={}` props, so we can't lean on CSS @media rules to swap
@@ -536,9 +539,13 @@ const LandingPage = () => {
                                       href="https://www.yugnext-ai.com"
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      onClick={(e) => {
+                                      onClick={async (e) => {
                                         e.preventDefault();
-                                        window.open('https://www.yugnext-ai.com', '_blank', 'noopener,noreferrer');
+                                        if (Capacitor.isNativePlatform()) {
+                                            await Browser.open({ url: 'https://www.yugnext-ai.com' });
+                                        } else {
+                                            window.open('https://www.yugnext-ai.com', '_blank', 'noopener,noreferrer');
+                                        }
                                       }}
                                       style={styles.footerLink}
                                     >Yugenxt Official</a>

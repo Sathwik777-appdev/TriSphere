@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getTextbooks } from '../services/firestoreService';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 
 const extractGeoGebraId = (input) => {
   if (!input) return '';
@@ -281,7 +283,13 @@ export default function SimulationsPanel({ type = 'geogebra', defaultSlug = '', 
                   <div>
                     <button
                       style={{ ...styles.button, backgroundColor: '#2b6cb0' }}
-                      onClick={() => window.open(embedUrl, '_blank')}
+                      onClick={async () => {
+                      if (Capacitor.isNativePlatform()) {
+                          await Browser.open({ url: embedUrl });
+                      } else {
+                          window.open(embedUrl, '_blank');
+                      }
+                    }}
                     >
                       Open simulation in a new tab
                     </button>

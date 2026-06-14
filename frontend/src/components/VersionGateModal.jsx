@@ -1,5 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 
 /**
  * VersionGateModal - Premium Glassmorphic Update Screen
@@ -25,11 +27,19 @@ export default function VersionGateModal({
       targetUrl = iosStoreUrl;
     }
 
+    const openLink = async (url) => {
+      if (Capacitor.isNativePlatform()) {
+        await Browser.open({ url });
+      } else {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+    };
+
     if (targetUrl) {
-      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+      openLink(targetUrl);
     } else {
       // Fallback
-      window.open('https://play.google.com/store', '_blank', 'noopener,noreferrer');
+      openLink('https://play.google.com/store');
     }
   };
 

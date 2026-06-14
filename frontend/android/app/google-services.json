@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "906769842576",
+    "project_id": "trisphere-4b121",
+    "storage_bucket": "trisphere-4b121.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:906769842576:android:481914cd71536c4de7b315",
+        "android_client_info": {
+          "package_name": "com.trisphere.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqowAB48MKWeYh26PhlJgYHpOh1-oCTJY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

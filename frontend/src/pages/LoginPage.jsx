@@ -235,18 +235,22 @@ export const LoginPage = () => {
               <img src="/yugnext-logo.png" alt="Yugnext-AI" style={styles.brandingLogo} />
               <span style={styles.brandingName}>Yugnext-AI</span>
             </div>
-            <div style={styles.brandingInfo}>
-              <a
-                href="https://www.yugnext-ai.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ ...styles.brandingLink, cursor: 'pointer' }}
-              >
-                Visit: www.yugnext-ai.com
-              </a>
-              <a href="mailto:contact@yugnext-ai.com" style={styles.brandingLink}>
-                Contact: contact@yugnext-ai.com
-              </a>
+            <div style={{...styles.brandingInfo, gap: '12px' }}>
+              <div style={{ padding: '8px 0' }}>
+                <a
+                  href="https://www.yugnext-ai.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ ...styles.brandingLink, cursor: 'pointer', padding: '10px' }}
+                >
+                  Visit: www.yugnext-ai.com
+                </a>
+              </div>
+              <div style={{ padding: '8px 0' }}>
+                <a href="mailto:contact@yugnext-ai.com" style={{ ...styles.brandingLink, padding: '10px' }}>
+                  Contact: contact@yugnext-ai.com
+                </a>
+              </div>
             </div>
           </div>
         </div>

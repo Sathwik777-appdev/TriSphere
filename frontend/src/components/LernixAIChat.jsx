@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { chatWithAI, extractTextFromImage } from '../services/aiService';
-import { saveChatSession, getChatSessions, getDailyChatUsage } from '../services/firestoreService';
+import { saveChatSession, getChatSessions, getDailyChatUsage, incrementDailyChatUsage } from '../services/firestoreService';
 import { useAuth } from '../hooks/useAuth';
 import { safeLocalStorage } from '../utils/storage';
 import { warningToast } from '../utils/toast';
@@ -14,18 +14,12 @@ import 'katex/dist/katex.min.css';
 import { useIsMobile } from '../hooks/useMediaQuery';
 
 
-// Daily limit configuration — grade-based
-// Grades 1–3: 2 messages/day · Grades 4–5: 5 messages/day · Grades 6–10 (and above): 10 messages/day
-const LIMIT_GRADES_1_3 = 2;
-const LIMIT_GRADES_4_5 = 5;
-const LIMIT_GRADES_6_10 = 10;
-
+// Daily limit configuration: Exactly matches the student's class number
 const getDailyLimitForGrade = (rawGrade) => {
   const grade = parseInt(rawGrade, 10);
-  if (Number.isNaN(grade)) return LIMIT_GRADES_6_10; // unknown → permissive default
-  if (grade >= 1 && grade <= 3) return LIMIT_GRADES_1_3;
-  if (grade >= 4 && grade <= 5) return LIMIT_GRADES_4_5;
-  return LIMIT_GRADES_6_10;
+  if (Number.isNaN(grade)) return 5; // Default for unknown/guest
+  // Max cap at 20 just in case, min 1
+  return Math.max(1, Math.min(grade, 20));
 };
 
 export const LernixAIChat = ({ isMaximized = false }) => {
@@ -630,7 +624,10 @@ export const LernixAIChat = ({ isMaximized = false }) => {
     const userMessage = { role: 'user', content: uiMessage };
     
     setMessages(prev => [...prev, userMessage]);
-    setDailyMessageCount(prev => prev + 1); // Increment local count instantly
+    
+    // Increment both locally and in Firestore database immediately
+    setDailyMessageCount(prev => prev + 1);
+    incrementDailyChatUsage(userId).catch(e => console.error('Failed to increment usage', e));
 
     setInput('');
     setSelectedFile(null);
@@ -657,10 +654,6 @@ export const LernixAIChat = ({ isMaximized = false }) => {
       ]);
 
       setMessages(prev => [...prev, { role: 'assistant', content: responseObj.content }]);
-
-      if (typeof responseObj.dailyMessageCount === 'number') {
-        setDailyMessageCount(responseObj.dailyMessageCount);
-      }
 
     } catch (err) {
       console.error('Chat error:', err);
@@ -937,7 +930,9 @@ export const LernixAIChat = ({ isMaximized = false }) => {
                     </div>
                   <div style={styles.messageContent}>
                     <div style={{ ...styles.messageText, fontSize: isMaximized ? '18px' : '15px' }} className="lernix-md-content">
-                      <ChatMessage content={msg.content} />
+                      <div className="selectable-text">
+                        <ChatMessage content={msg.content} />
+                      </div>
                     </div>
                     {msg.role === 'assistant' && (
                       <button

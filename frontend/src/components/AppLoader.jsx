@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 import './AppLoader.css';
 
 // Build-time constants injected by Vite (see vite.config.js `define`).
@@ -200,23 +202,31 @@ const AppLoader = ({ message, duration = 5000 }) => {
                     />
                     <span className="app-loader-brand">Yugnext-AI</span>
                 </div>
-                <div className="app-loader-contact-info">
-                    <a
-                        href="https://www.yugnext-ai.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="app-loader-link"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            window.open("https://www.yugnext-ai.com", "_blank");
-                        }}
-                        style={{ cursor: 'pointer', zIndex: 100001, position: 'relative' }}
-                    >
-                        Visit: www.yugnext-ai.com
-                    </a>
-                    <a href="mailto:contact@yugnext-ai.com" className="app-loader-link">
-                        Contact: contact@yugnext-ai.com
-                    </a>
+                <div style={{ marginTop: '20px' }}>
+                    <div style={{ marginBottom: '15px' }}>
+                        <a 
+                            href="https://www.yugnext-ai.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="app-loader-link"
+                            style={{ padding: '10px' }}
+                            onClick={async (e) => {
+                                e.preventDefault();
+                                if (Capacitor.isNativePlatform()) {
+                                    await Browser.open({ url: "https://www.yugnext-ai.com" });
+                                } else {
+                                    window.open("https://www.yugnext-ai.com", "_blank");
+                                }
+                            }}
+                        >
+                            Visit: www.yugnext-ai.com
+                        </a>
+                    </div>
+                    <div>
+                        <a href="mailto:contact@yugnext-ai.com" className="app-loader-link" style={{ padding: '10px' }}>
+                            Contact: contact@yugnext-ai.com
+                        </a>
+                    </div>
                 </div>
 
                 {/* Build version stamp — matches the SW cache version, so

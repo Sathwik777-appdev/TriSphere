@@ -6,10 +6,13 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { chatWithAI, extractTextFromImage } from '../services/aiService';
 import { extractTextFromPDF } from '../services/pdfHelper';
-import { saveChatSession, getChatSessions, getDailyChatUsage } from '../services/firestoreService';
+import { saveChatSession, getChatSessions, getDailyChatUsage, incrementDailyChatUsage } from '../services/firestoreService';
 import { useAuth } from '../hooks/useAuth';
 import { safeLocalStorage } from '../utils/storage';
 import { warningToast, successToast } from '../utils/toast';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { KeepAwake } from '@capacitor-community/keep-awake';
+import { Share } from '@capacitor/share';
 import 'katex/dist/katex.min.css';
 
 /**
@@ -24,18 +27,12 @@ import 'katex/dist/katex.min.css';
  *   - Slide-in sidebar from the left for chat history
  */
 
-// Daily limit configuration — grade-based
-// Grades 1–3: 2 messages/day · Grades 4–5: 5 messages/day · Grades 6–10 (and above): 10 messages/day
-const LIMIT_GRADES_1_3 = 2;
-const LIMIT_GRADES_4_5 = 5;
-const LIMIT_GRADES_6_10 = 10;
-
+// Daily limit configuration: Exactly matches the student's class number
 const getDailyLimitForGrade = (rawGrade) => {
   const grade = parseInt(rawGrade, 10);
-  if (Number.isNaN(grade)) return LIMIT_GRADES_6_10; // unknown → permissive default
-  if (grade >= 1 && grade <= 3) return LIMIT_GRADES_1_3;
-  if (grade >= 4 && grade <= 5) return LIMIT_GRADES_4_5;
-  return LIMIT_GRADES_6_10;
+  if (Number.isNaN(grade)) return 5; // Default for unknown/guest
+  // Max cap at 20 just in case, min 1
+  return Math.max(1, Math.min(grade, 20));
 };
 
 const SUGGESTIONS = [
@@ -126,7 +123,18 @@ export const LernixAIChatMobile = ({ onBack }) => {
       setDailyCount(0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, currentSessionId]);
+
+  // Keep screen awake while studying/chatting
+  useEffect(() => {
+    const lockScreen = async () => {
+      try { await KeepAwake.keepAwake(); } catch (e) {}
+    };
+    lockScreen();
+    return () => {
+      try { KeepAwake.allowSleep(); } catch (e) {}
+    };
+  }, []);
 
   useEffect(() => {
     if (showHistory) fetchHistory();
@@ -246,7 +254,11 @@ export const LernixAIChatMobile = ({ onBack }) => {
 
     // Update message log immediately
     setMessages(prev => [...prev, userMsg]);
-    setDailyCount(prev => prev + 1); // Increment local count instantly
+    
+    // Increment both locally and in Firestore database immediately
+    setDailyCount(prev => prev + 1);
+    incrementDailyChatUsage(userId).catch(e => console.error('Failed to increment usage', e));
+
     setInput('');
     setSelectedFile(null);
     setLoading(true);
@@ -268,9 +280,6 @@ export const LernixAIChatMobile = ({ onBack }) => {
       ]);
 
       setMessages(prev => [...prev, { role: 'assistant', content: responseObj.content }]);
-      if (typeof responseObj.dailyMessageCount === 'number') {
-        setDailyCount(responseObj.dailyMessageCount);
-      }
     } catch (err) {
       setDailyCount(prev => Math.max(0, prev - 1)); // Revert local count if response fails
       const isLimitError = err.message && (
@@ -299,6 +308,10 @@ export const LernixAIChatMobile = ({ onBack }) => {
 
   const handleSend = (e) => {
     if (e) e.preventDefault();
+    try {
+      Haptics.impact({ style: ImpactStyle.Light });
+      playBeep(1200, 30, 0.03); // Soft, satisfying "pop" sound
+    } catch (err) {}
     sendMessage(input);
   };
 
@@ -492,6 +505,18 @@ export const LernixAIChatMobile = ({ onBack }) => {
     successToast('Copied');
   };
 
+  const shareText = async (text) => {
+    try {
+      await Share.share({
+        title: 'Lernix AI',
+        text: text,
+        dialogTitle: 'Share this response'
+      });
+    } catch (e) {
+      console.warn('Share error', e);
+    }
+  };
+
   const regenerateLast = async () => {
     // Strip the last assistant message and resend the last user message.
     const lastUserIdx = messages.findLastIndex
@@ -676,6 +701,7 @@ export const LernixAIChatMobile = ({ onBack }) => {
                 content={msg.content}
                 isLastAssistant={i === messages.length - 1 && msg.role === 'assistant' && i > 0}
                 onCopy={() => copyToClipboard(msg.content)}
+                onShare={() => shareText(msg.content)}
                 onRegenerate={regenerateLast}
               />
             ))}
@@ -805,6 +831,7 @@ export const LernixAIChatMobile = ({ onBack }) => {
               }
             }}
             placeholder="Ask anything"
+            enterKeyHint="send"
             rows={1}
             style={{
               ...S.textarea,
@@ -984,7 +1011,7 @@ const WelcomeScreen = ({ onPick, firstName }) => (
 // ─────────────────────────────────────────────────────────────────────────────
 // Message row — user (bubble) vs assistant (full width, action icons below)
 // ─────────────────────────────────────────────────────────────────────────────
-const MessageRow = ({ role, content, isLastAssistant, onCopy, onRegenerate }) => {
+const MessageRow = ({ role, content, isLastAssistant, onCopy, onShare, onRegenerate }) => {
   const [liked, setLiked] = useState(null); // null | 'up' | 'down'
 
   if (role === 'user') {
@@ -1009,7 +1036,7 @@ const MessageRow = ({ role, content, isLastAssistant, onCopy, onRegenerate }) =>
         <div style={S.aiDot} />
         <span style={S.assistantLabel}>Lernix AI</span>
       </div>
-      <div style={S.assistantBody}>
+      <div style={S.assistantBody} className="selectable-text">
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkMath]}
           rehypePlugins={[rehypeKatex]}
@@ -1038,6 +1065,9 @@ const MessageRow = ({ role, content, isLastAssistant, onCopy, onRegenerate }) =>
       <div style={S.actionRow}>
         <button className="lernix-action" onClick={onCopy} style={S.actionBtn} aria-label="Copy">
           <IconCopy />
+        </button>
+        <button className="lernix-action" onClick={onShare} style={S.actionBtn} aria-label="Share">
+          <IconShare />
         </button>
         <button
           className="lernix-action"
@@ -1114,6 +1144,15 @@ const IconCopy = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+  </svg>
+);
+const IconShare = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="18" cy="5" r="3" />
+    <circle cx="6" cy="12" r="3" />
+    <circle cx="18" cy="19" r="3" />
+    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
   </svg>
 );
 const IconThumbUp = () => (

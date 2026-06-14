@@ -12,6 +12,9 @@ import { warningToast, successToast } from '../utils/toast';
 import { jsPDF } from 'jspdf';
 import { QAForum } from './QAForum';
 import { speak, stopSpeaking } from '../utils/browserTTS';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 
 export const MyNotes = ({ selectedSubject }) => {
   const { userData, user } = useAuth();
@@ -338,7 +341,7 @@ export const MyNotes = ({ selectedSubject }) => {
     return () => stopSpeaking();
   }, []);
 
-  const handleDownloadPDF = (note, e) => {
+  const handleDownloadPDF = async (note, e) => {
     e.stopPropagation();
     try {
       const doc = new jsPDF();
@@ -376,8 +379,24 @@ export const MyNotes = ({ selectedSubject }) => {
         currentY += 7;
       }
       
-      doc.save(`${(note.chapterName || 'Notes').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}.pdf`);
-      successToast('PDF Downloaded successfully!');
+      const filename = `${(note.chapterName || 'Notes').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}.pdf`;
+      
+      if (Capacitor.isNativePlatform()) {
+        const base64Data = doc.output('datauristring').split(',')[1];
+        const result = await Filesystem.writeFile({
+          path: filename,
+          data: base64Data,
+          directory: Directory.Cache
+        });
+        await Share.share({
+          url: result.uri,
+          title: 'Download Notes',
+        });
+        successToast('PDF Ready to share or save!');
+      } else {
+        doc.save(filename);
+        successToast('PDF Downloaded successfully!');
+      }
     } catch (error) {
       console.error('Error generating PDF:', error);
       warningToast('Failed to generate PDF');

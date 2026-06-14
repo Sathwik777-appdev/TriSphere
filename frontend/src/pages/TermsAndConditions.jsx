@@ -84,8 +84,23 @@ const TermsAndConditions = () => {
                         <h2 style={styles.subTitle}>7. Contact Information</h2>
                         <p style={styles.paragraph}>
                             If you have questions about these Terms, please contact us at:<br />
-                            <strong>Email:</strong> contact@yugnext-ai.com<br />
-                            <strong>Website:</strong> www.yugnext-ai.com
+                            <strong>Email:</strong> <a href="mailto:contact@yugnext-ai.com" style={{ color: '#38bdf8', textDecoration: 'none' }}>contact@yugnext-ai.com</a><br />
+                            <strong>Website:</strong> <a 
+                                href="https://www.yugnext-ai.com" 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                style={{ color: '#38bdf8', textDecoration: 'none' }}
+                                onClick={async (e) => {
+                                    e.preventDefault();
+                                    const { Capacitor } = await import('@capacitor/core');
+                                    const { Browser } = await import('@capacitor/browser');
+                                    if (Capacitor.isNativePlatform()) {
+                                        await Browser.open({ url: "https://www.yugnext-ai.com" });
+                                    } else {
+                                        window.open("https://www.yugnext-ai.com", "_blank");
+                                    }
+                                }}
+                            >www.yugnext-ai.com</a>
                         </p>
                     </section>
                 </motion.div>

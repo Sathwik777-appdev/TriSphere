@@ -76,16 +76,10 @@ export const AccountSettings = ({ onClose }) => {
         };
         loadCurrentPhone();
 
-        // Cleanup function to clear recaptcha when modal closes
+        // Cleanup function - NO LONGER CLEARING RECAPTCHA
+        // We keep the recaptcha globally initialized to prevent "already rendered" errors
         return () => {
-            if (window.recaptchaVerifier) {
-                try {
-                    window.recaptchaVerifier.clear();
-                } catch (e) {
-                    console.error('Error clearing recaptcha:', e);
-                }
-                window.recaptchaVerifier = null;
-            }
+            // Do not clear recaptcha
         };
     }, [user?.uid]);
     
@@ -178,15 +172,8 @@ export const AccountSettings = ({ onClose }) => {
                 errorToast('Failed to send OTP. ' + error.message);
             }
 
-            // Reset recaptcha
-            if (window.recaptchaVerifier) {
-                try {
-                    window.recaptchaVerifier.clear();
-                } catch (e) {
-                    console.warn('Error clearing recaptcha:', e);
-                }
-                window.recaptchaVerifier = null;
-            }
+            // We no longer reset recaptcha to allow reuse
+            // Do nothing here
         } finally {
             setPhoneLoading(false);
         }
@@ -203,7 +190,7 @@ export const AccountSettings = ({ onClose }) => {
         try {
             // Attempt to link for security features, but don't crash if it fails
             try {
-                await verifyOtpAndLink(user, confirmationResult.verificationId, otp);
+                await verifyOtpAndLink(user, confirmationResult, otp);
             } catch (linkErr) {
                 if (linkErr.code === 'auth/credential-already-in-use' || linkErr.code === 'auth/account-exists-with-different-credential') {
                     console.info('ℹ️ Phone number already linked to another account. Saving to profile only.');
@@ -281,10 +268,7 @@ export const AccountSettings = ({ onClose }) => {
                 errorToast('Failed to send OTP. ' + error.message);
             }
 
-            if (window.recaptchaVerifier) {
-                window.recaptchaVerifier.clear();
-                window.recaptchaVerifier = null;
-            }
+            // Do not clear recaptcha
         } finally {
             setPasswordLoading(false);
         }
@@ -303,7 +287,7 @@ export const AccountSettings = ({ onClose }) => {
 
             // Use linking logic to verify OTP without triggering a new login (which confirm() does)
             try {
-                await verifyOtpAndLink(user, passwordConfirmationResult.verificationId, passwordOtp);
+                await verifyOtpAndLink(user, passwordConfirmationResult, passwordOtp);
             } catch (linkError) {
                 // If it's already in use, that's fine—it still proves they own the phone
                 if (linkError.code === 'auth/credential-already-in-use' || linkError.code === 'auth/account-exists-with-different-credential') {

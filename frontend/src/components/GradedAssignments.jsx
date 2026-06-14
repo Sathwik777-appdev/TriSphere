@@ -3,6 +3,9 @@ import { collection, query, where, getDocs, orderBy, limit } from 'firebase/fire
 import { db } from '../services/firebase';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 
 export const GradedAssignments = ({ studentId, schoolName }) => {
   const [submissions, setSubmissions] = useState([]);
@@ -178,7 +181,7 @@ export const GradedAssignments = ({ studentId, schoolName }) => {
     return '💪';
   };
 
-  const generateCorrectedPDF = (submission) => {
+  const generateCorrectedPDF = async (submission) => {
     try {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
@@ -257,7 +260,22 @@ export const GradedAssignments = ({ studentId, schoolName }) => {
          doc.text(String(contentStr), 14, 100, { maxWidth: pageWidth - 28 });
       }
 
-      doc.save(`${String(submission.assignmentTitle || 'assignment').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_corrections.pdf`);
+      const filename = `${String(submission.assignmentTitle || 'assignment').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_corrections.pdf`;
+
+      if (Capacitor.isNativePlatform()) {
+        const base64Data = doc.output('datauristring').split(',')[1];
+        const result = await Filesystem.writeFile({
+          path: filename,
+          data: base64Data,
+          directory: Directory.Cache
+        });
+        await Share.share({
+          url: result.uri,
+          title: 'Download Corrected Assignment',
+        });
+      } else {
+        doc.save(filename);
+      }
     } catch (err) {
       console.error('Error generating PDF:', err);
       alert(`Could not generate PDF. Reason: ${err.message}`);

@@ -1116,7 +1116,7 @@ export default function StudentDashboardMobile() {
             >
               <div style={S.feedbackGrabber} />
               <div style={S.feedbackHead}>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: '200px' }}>
                   <h3 style={S.feedbackTitle}>Share feedback</h3>
                   <p style={S.feedbackSub}>What can we improve? Tell us anything.</p>
                 </div>
@@ -2787,8 +2787,10 @@ const S = {
     background: 'rgba(255, 255, 255, 0.06)',
     border: '1px solid rgba(255, 255, 255, 0.10)',
     color: '#cbd5e1',
-    width: 32,
-    height: 32,
+    width: '32px',
+    minWidth: '32px',
+    maxWidth: '32px',
+    height: '32px',
     borderRadius: 10,
     cursor: 'pointer',
     display: 'flex',

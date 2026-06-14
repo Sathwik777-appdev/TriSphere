@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 import { safeLocalStorage } from '../utils/storage';
 
 export const PrivacyPolicy = ({ onAccept, viewOnly = false }) => {
@@ -269,9 +271,13 @@ export const PrivacyPolicy = ({ onAccept, viewOnly = false }) => {
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ ...styles.brandingLink, wordBreak: 'break-all' }}
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.preventDefault();
-                    window.open("https://firebase.google.com/support/privacy", "_blank");
+                    if (Capacitor.isNativePlatform()) {
+                        await Browser.open({ url: "https://firebase.google.com/support/privacy" });
+                    } else {
+                        window.open("https://firebase.google.com/support/privacy", "_blank");
+                    }
                   }}
                 >https://firebase.google.com/support/privacy</a>
               </p>
@@ -570,17 +576,25 @@ export const PrivacyPolicy = ({ onAccept, viewOnly = false }) => {
             <div style={styles.brandingBox}>
               <img src="/yugnext-logo.png" alt="Yugnext-AI logo" style={styles.brandingLogo} />
               <p style={styles.brandingText}>Powered by <strong>Yugnext-AI</strong></p>
-              <p style={styles.brandingInfo}>Visit: <a
-                href="https://www.yugnext-ai.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={styles.brandingLink}
-                onClick={(e) => {
-                  e.preventDefault();
-                  window.open("https://www.yugnext-ai.com", "_blank");
-                }}
-              >www.yugnext-ai.com</a></p>
-              <p style={styles.brandingInfo}>Contact: <a href="mailto:contact@yugnext-ai.com" style={styles.brandingLink}>contact@yugnext-ai.com</a></p>
+              <div style={{ padding: '8px 0' }}>
+                <p style={{ ...styles.brandingInfo, margin: '8px 0' }}>Visit: <a
+                  href="https://www.yugnext-ai.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ ...styles.brandingLink, padding: '10px' }}
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    if (Capacitor.isNativePlatform()) {
+                        await Browser.open({ url: "https://www.yugnext-ai.com" });
+                    } else {
+                        window.open("https://www.yugnext-ai.com", "_blank");
+                    }
+                  }}
+                >www.yugnext-ai.com</a></p>
+              </div>
+              <div style={{ padding: '8px 0' }}>
+                <p style={{ ...styles.brandingInfo, margin: '8px 0' }}>Contact: <a href="mailto:contact@yugnext-ai.com" style={{ ...styles.brandingLink, padding: '10px' }}>contact@yugnext-ai.com</a></p>
+              </div>
             </div>
           </div>
         </div>
