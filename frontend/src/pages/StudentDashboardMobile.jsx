@@ -59,6 +59,7 @@ import { PrivacyPolicy } from '../components/PrivacyPolicy';
 import StudentSimulationLab from '../components/StudentSimulationLab';
 import { StudentProfileModal } from '../components/StudentProfileModal';
 import { successToast, warningToast, errorToast } from '../utils/toast';
+import TextbookViewer from '../components/TextbookViewer';
 
 import { logActivity } from '../services/firestoreService';
 
@@ -230,6 +231,96 @@ export default function StudentDashboardMobile() {
       setShowNotificationBanner(true);
     }
   }, []);
+
+  // Native back-button navigation integration for modals and drawers
+  useEffect(() => {
+    const activeModalsList = [];
+
+    if (isSettingsOpen) {
+      activeModalsList.push({ id: 'settings', close: () => setIsSettingsOpen(false) });
+    }
+    if (showAccountSettings) {
+      activeModalsList.push({ id: 'account', close: () => setShowAccountSettings(false) });
+    }
+    if (showPrivacyPolicy) {
+      activeModalsList.push({ id: 'privacy', close: () => setShowPrivacyPolicy(false) });
+    }
+    if (showFeedback) {
+      activeModalsList.push({ id: 'feedback', close: () => setShowFeedback(false) });
+    }
+    if (showUserSearch) {
+      activeModalsList.push({ id: 'search', close: () => setShowUserSearch(false) });
+    }
+    if (showStudentProfile) {
+      activeModalsList.push({ id: 'profile', close: () => setShowStudentProfile(false) });
+    }
+
+    window.activeModals = window.activeModals || [];
+    
+    // Register close callbacks
+    const registeredCallbacks = [];
+    activeModalsList.forEach(modal => {
+      const closeFn = modal.close;
+      window.activeModals.push(closeFn);
+      registeredCallbacks.push(closeFn);
+    });
+
+    return () => {
+      window.activeModals = (window.activeModals || []).filter(cb => !registeredCallbacks.includes(cb));
+    };
+  }, [isSettingsOpen, showAccountSettings, showPrivacyPolicy, showFeedback, showUserSearch, showStudentProfile]);
+
+  // Native back-button navigation integration for dashboard tabs
+  useEffect(() => {
+    if (activeTab === 'home') return;
+
+    const closeFn = () => {
+      if (activeTab.startsWith('more-')) {
+        setActiveTab('more');
+      } else {
+        setActiveTab('home');
+      }
+    };
+
+    window.activeModals = window.activeModals || [];
+    window.activeModals.push(closeFn);
+
+    return () => {
+      window.activeModals = (window.activeModals || []).filter(cb => cb !== closeFn);
+    };
+  }, [activeTab]);
+
+  // Pre-fetch and cache textbooks & assignments for offline use
+  useEffect(() => {
+    const prefetchOfflineData = async () => {
+      if (!navigator.onLine) return;
+      try {
+        // 1. Textbooks
+        const tbQuery = query(collection(db, 'textbooks'));
+        const tbSnap = await getDocs(tbQuery);
+        const tbList = tbSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        for (const item of tbList) {
+          await offlineDB.put('textbooks', item);
+        }
+
+        // 2. Assignments
+        const assQuery = query(collection(db, 'assignments'));
+        const assSnap = await getDocs(assQuery);
+        const assList = assSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        for (const item of assList) {
+          await offlineDB.put('assignments', item);
+        }
+
+        console.log(`💾 Offline pre-fetch completed: ${tbList.length} textbooks, ${assList.length} assignments cached.`);
+      } catch (err) {
+        console.warn('Failed to pre-fetch offline data:', err);
+      }
+    };
+
+    if (userData && navigator.onLine) {
+      prefetchOfflineData();
+    }
+  }, [userData]);
 
   const handleEnableNotifications = async () => {
     if (user?.uid) {
@@ -711,6 +802,7 @@ export default function StudentDashboardMobile() {
         assignments: selectedSubject ? `${selectedSubject} · Assignments` : 'Assignments',
         quizzes:     selectedSubject ? `${selectedSubject} · Quizzes` : 'Quizzes',
         simulations: selectedSubject ? `${selectedSubject} · Simulations` : 'Simulations',
+        textbooks:   selectedSubject ? `${selectedSubject} · Textbooks` : 'Textbooks',
         grades:      'My grades',
       }[learnView];
 
@@ -759,6 +851,11 @@ export default function StudentDashboardMobile() {
                 />
               </ErrorBoundary>
             )}
+            {learnView === 'textbooks' && (
+              <ErrorBoundary mini context="Textbook Viewer">
+                <TextbookViewer selectedSubject={selectedSubject || subjects[0] || 'General'} />
+              </ErrorBoundary>
+            )}
             {learnView === 'grades' && (
               <ErrorBoundary mini context="Grades View">
                 <GradedAssignments studentId={user?.uid} schoolName={userData?.schoolName || ''} />
@@ -788,6 +885,7 @@ export default function StudentDashboardMobile() {
               onPickAssignments={() => enterLearnView('assignments', s)}
               onPickQuizzes={()     => enterLearnView('quizzes', s)}
               onPickSimulations={() => enterLearnView('simulations', s)}
+              onPickTextbooks={()   => enterLearnView('textbooks', s)}
             />
           )) : <Empty text="No subjects yet — your teacher will add them soon." />}
         </div>
@@ -1166,9 +1264,7 @@ export default function StudentDashboardMobile() {
               </svg>
             </button>
 
-            <div style={S.settingsHeader}>
-              <AnimatedLogo variant="header" size={28} withWordmark={false} />
-            </div>
+            <div style={S.settingsHeader} />
 
             <div style={S.profileSection}>
               {/* Swipeable Instagram-style profile carousel:
@@ -1751,7 +1847,7 @@ const subjectIcon = (name) => {
  * Tapping the header expands to reveal Notes / Assignments / Quizzes
  * options for that subject. Only one subject can be expanded at a time.
  */
-const SubjectAccordion = ({ name, expanded, onToggle, onPickNotes, onPickAssignments, onPickQuizzes, onPickSimulations }) => {
+const SubjectAccordion = ({ name, expanded, onToggle, onPickNotes, onPickAssignments, onPickQuizzes, onPickSimulations, onPickTextbooks }) => {
   const hasSimulations = ['Physics', 'Chemistry', 'Biology', 'Mathematics'].includes(name);
   return (
     <div style={{ ...S.subjectAccordion, ...(expanded ? S.subjectAccordionOpen : {}) }}>
@@ -1808,6 +1904,12 @@ const SubjectAccordion = ({ name, expanded, onToggle, onPickNotes, onPickAssignm
                 label="Quizzes"
                 desc="Practice tests"
                 onClick={onPickQuizzes}
+              />
+              <DropdownOption
+                icon={<BookIcon size={22} color={C.success} />}
+                label="Textbooks (PDF)"
+                desc="Download for offline"
+                onClick={onPickTextbooks}
               />
             </div>
           </motion.div>

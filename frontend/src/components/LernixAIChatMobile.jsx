@@ -13,7 +13,44 @@ import { warningToast, successToast } from '../utils/toast';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import { Share } from '@capacitor/share';
+import { registerPlugin, Capacitor } from '@capacitor/core';
+import { speak, stopSpeaking } from '../utils/browserTTS';
 import 'katex/dist/katex.min.css';
+
+let AppPermissions = null;
+try {
+  if (Capacitor.isNativePlatform()) {
+    AppPermissions = registerPlugin('AppPermissions');
+  }
+} catch (e) {
+  console.warn('AppPermissions plugin registration failed, using web fallback:', e);
+}
+
+const requestMicPermission = async () => {
+  let micGranted = false;
+  if (Capacitor.isNativePlatform() && AppPermissions) {
+    try {
+      const res = await AppPermissions.requestPermission({ type: 'microphone' });
+      micGranted = !!res.granted;
+    } catch (err) {
+      console.warn('Native microphone permission request failed:', err);
+    }
+  } else {
+    // Web fallback check
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((t) => t.stop());
+        micGranted = true;
+      } catch (err) {
+        console.warn('Web microphone permission denied:', err);
+      }
+    } else {
+      micGranted = true; // speech recognition fallback
+    }
+  }
+  return micGranted;
+};
 
 /**
  * Lernix AI — Mobile chat interface.
@@ -66,6 +103,8 @@ export const LernixAIChatMobile = ({ onBack }) => {
   const [dailyCount, setDailyCount] = useState(0);
   const [selectedFile, setSelectedFile] = useState(null);
   const [isAnalysing, setIsAnalysing] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const [speakingIndex, setSpeakingIndex] = useState(null);
 
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -381,66 +420,36 @@ export const LernixAIChatMobile = ({ onBack }) => {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = 0;
     }
-    try { micStreamRef.current?.getTracks().forEach(t => t.stop()); } catch (e) {}
-    micStreamRef.current = null;
-    try { audioCtxRef.current?.close(); } catch (e) {}
-    audioCtxRef.current = null;
-    analyserRef.current = null;
     setMicLevel(0);
   };
 
-  const startMicAnalyser = async () => {
-    try {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx || !navigator.mediaDevices?.getUserMedia) return; // visualisation is optional
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      micStreamRef.current = stream;
-      const ctx = new Ctx();
-      audioCtxRef.current = ctx;
-      const source = ctx.createMediaStreamSource(stream);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 512;
-      analyser.smoothingTimeConstant = 0.7;
-      source.connect(analyser);
-      analyserRef.current = analyser;
-
-      const data = new Uint8Array(analyser.frequencyBinCount);
-      const tick = () => {
-        if (!analyserRef.current) return;
-        analyser.getByteTimeDomainData(data);
-        // Compute peak-to-peak amplitude around the silent baseline (128).
-        let peak = 0;
-        for (let i = 0; i < data.length; i++) {
-          const dev = Math.abs(data[i] - 128);
-          if (dev > peak) peak = dev;
-        }
-        // Normalise 0..1 and boost a bit so quiet speech still animates.
-        const level = Math.min(1, (peak / 128) * 1.8);
-        setMicLevel(prev => {
-          // Smooth lerp so the icon eases rather than jitters.
-          const next = prev + (level - prev) * 0.35;
-          return next < 0.01 ? 0 : next;
-        });
-        rafRef.current = requestAnimationFrame(tick);
-      };
+  const startMicAnalyser = () => {
+    let active = true;
+    const tick = () => {
+      if (!active) return;
+      // Generate simulated organic voice wave fluctuation between 0.15 and 0.45
+      const time = Date.now() / 150;
+      const wave = Math.abs(Math.sin(time) * 0.2 + Math.cos(time * 0.7) * 0.1) + 0.15;
+      setMicLevel(wave);
       rafRef.current = requestAnimationFrame(tick);
-    } catch (err) {
-      // Permission denied / busy — we still let SpeechRecognition try.
-      console.warn('Mic visualiser unavailable:', err?.message || err);
-    }
+    };
+    rafRef.current = requestAnimationFrame(tick);
   };
 
-  const toggleMic = () => {
+  const toggleMic = async () => {
     // ── STOP ──
     if (isListening) {
       try { recognitionRef.current?.stop(); } catch (e) {}
-      stopMicAnalyser();
-      playBeep(440, 100);
-      setIsListening(false);
       return;
     }
 
     // ── START ──
+    const hasPermission = await requestMicPermission();
+    if (!hasPermission) {
+      warningToast('Microphone access is blocked. Please allow microphone permission in settings.');
+      return;
+    }
+
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
       warningToast('Voice input not supported on this browser.');
@@ -450,25 +459,47 @@ export const LernixAIChatMobile = ({ onBack }) => {
     try {
       const r = new SR();
       r.lang = 'en-IN';
-      r.continuous = false;
+      r.continuous = true;
       r.interimResults = true;
       let finalText = '';
+      
+      r.onstart = () => {
+        console.log('[LernixChatMobile] Speech recognition started');
+      };
       r.onresult = (event) => {
-        let interim = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const t = event.results[i][0].transcript;
-          if (event.results[i].isFinal) finalText += t;
-          else interim += t;
+        console.log('[LernixChatMobile] Speech recognition result received');
+        let finalTrans = '';
+        let interimTrans = '';
+        for (let i = 0; i < event.results.length; i++) {
+          const text = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTrans += (finalTrans ? ' ' : '') + text.trim();
+          } else {
+            interimTrans += (interimTrans ? ' ' : '') + text.trim();
+          }
         }
-        const live = (finalText + interim).trim();
-        if (live) setInput(live);
+        const live = (finalTrans + ' ' + interimTrans).trim();
+        setInput(live);
       };
       r.onerror = (e) => {
-        if (e.error !== 'no-speech') warningToast('Voice input error');
+        const code = e?.error || 'unknown';
+        console.error('[LernixChatMobile] Speech recognition error:', code);
+        if (code === 'no-speech' || code === 'aborted') return;
+        
+        let msg = 'Voice input failed.';
+        if (code === 'not-allowed' || code === 'service-not-allowed') {
+          msg = 'Microphone access is blocked. Please allow mic permission in settings.';
+        } else if (code === 'network') {
+          msg = 'Speech recognition needs internet access.';
+        } else if (code === 'audio-capture') {
+          msg = 'No microphone detected.';
+        }
+        warningToast(msg);
         stopMicAnalyser();
         setIsListening(false);
       };
       r.onend = () => {
+        console.log('[LernixChatMobile] Speech recognition ended');
         stopMicAnalyser();
         playBeep(440, 100);
         setIsListening(false);
@@ -480,20 +511,62 @@ export const LernixAIChatMobile = ({ onBack }) => {
       // for the visual animation. Errors are non-fatal.
       startMicAnalyser();
     } catch (err) {
+      console.error('[LernixChatMobile] Could not start speech recognition:', err);
       warningToast('Could not start voice input.');
       stopMicAnalyser();
       setIsListening(false);
     }
   };
 
-  // Clean up the analyser if the component unmounts mid-listen.
+  // Clean up speech and the analyser if the component unmounts.
   useEffect(() => {
     return () => {
       try { recognitionRef.current?.stop(); } catch (e) {}
       stopMicAnalyser();
+      stopSpeaking();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleSpeak = async (text, messageIndex) => {
+    if (!text) return;
+
+    if (speakingIndex === messageIndex && speaking) {
+      await stopSpeaking();
+      setSpeaking(false);
+      setSpeakingIndex(null);
+      return;
+    }
+
+    // Stop current speech if any
+    await stopSpeaking();
+    setSpeaking(true);
+    setSpeakingIndex(messageIndex);
+
+    // Clean text from HTML tags and markdown
+    const cleanText = text
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/\*\*/g, '') // Remove bold markers
+      .replace(/\*/g, '') // Remove italic markers
+      .replace(/`/g, '') // Remove code markers
+      .replace(/#{1,6}\s/g, '') // Remove headers
+      .replace(/\n\n/g, '. ') // Replace double line breaks with periods
+      .replace(/\n/g, ' '); // Replace single line breaks with spaces
+
+    try {
+      await speak(cleanText, {
+        rate: 0.9,
+        preferFemale: true,
+        lang: 'en-IN'
+      });
+      setSpeaking(false);
+      setSpeakingIndex(null);
+    } catch (e) {
+      console.error('Lernix AI mobile speech error:', e);
+      setSpeaking(false);
+      setSpeakingIndex(null);
+    }
+  };
 
   // ── Attachment menu actions ──
   const openCamera   = () => { setShowAttachMenu(false); cameraInputRef.current?.click(); };
@@ -703,6 +776,8 @@ export const LernixAIChatMobile = ({ onBack }) => {
                 onCopy={() => copyToClipboard(msg.content)}
                 onShare={() => shareText(msg.content)}
                 onRegenerate={regenerateLast}
+                onSpeak={() => handleSpeak(msg.content, i)}
+                isSpeaking={speakingIndex === i && speaking}
               />
             ))}
             {isAnalysing && (
@@ -1011,7 +1086,7 @@ const WelcomeScreen = ({ onPick, firstName }) => (
 // ─────────────────────────────────────────────────────────────────────────────
 // Message row — user (bubble) vs assistant (full width, action icons below)
 // ─────────────────────────────────────────────────────────────────────────────
-const MessageRow = ({ role, content, isLastAssistant, onCopy, onShare, onRegenerate }) => {
+const MessageRow = ({ role, content, isLastAssistant, onCopy, onShare, onRegenerate, onSpeak, isSpeaking }) => {
   const [liked, setLiked] = useState(null); // null | 'up' | 'down'
 
   if (role === 'user') {
@@ -1063,6 +1138,14 @@ const MessageRow = ({ role, content, isLastAssistant, onCopy, onShare, onRegener
         </ReactMarkdown>
       </div>
       <div style={S.actionRow}>
+        <button
+          className="lernix-action"
+          onClick={onSpeak}
+          style={{ ...S.actionBtn, color: isSpeaking ? '#a78bfa' : 'rgba(255,255,255,0.5)' }}
+          aria-label={isSpeaking ? 'Stop speaking' : 'Listen to response'}
+        >
+          {isSpeaking ? <IconVolumeMute /> : <IconVolume />}
+        </button>
         <button className="lernix-action" onClick={onCopy} style={S.actionBtn} aria-label="Copy">
           <IconCopy />
         </button>
@@ -1138,6 +1221,20 @@ const IconArrowUp = () => (
 const IconStop = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
     <rect x="6" y="6" width="12" height="12" rx="2" />
+  </svg>
+);
+const IconVolume = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+  </svg>
+);
+const IconVolumeMute = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+    <line x1="23" y1="9" x2="17" y2="15" />
+    <line x1="17" y1="9" x2="23" y2="15" />
   </svg>
 );
 const IconCopy = () => (

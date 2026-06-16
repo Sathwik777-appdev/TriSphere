@@ -56,6 +56,10 @@ export async function enablePushNotifications(uid) {
 
 async function registerFcmToken(uid) {
     try {
+        if (!messaging) {
+            console.warn('registerFcmToken: FCM is not initialized/supported on this device.');
+            return;
+        }
         const token = await getToken(messaging, { vapidKey: VAPID_KEY });
         if (!token) return;
 
@@ -147,6 +151,10 @@ export const usePushNotifications = () => {
         } else {
             // Web platform setup
             if (typeof window === 'undefined' || !('Notification' in window)) return;
+            if (!messaging) {
+                console.warn('setupWebPush: FCM is not initialized/supported on this device.');
+                return;
+            }
 
             const status = Notification.permission;
             if (status === 'denied') return;

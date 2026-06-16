@@ -39,6 +39,14 @@ export const db = initializeFirestore(app, {
 });
 export const storage = getStorage(app);
 export const functions = getFunctions(app);
-export const messaging = getMessaging(app);
+
+let messagingInstance = null;
+try {
+  messagingInstance = getMessaging(app);
+} catch (e) {
+  console.warn('Firebase Messaging is not supported or failed to initialize in this environment:', e);
+}
+
+export const messaging = messagingInstance;
 
 export default app;

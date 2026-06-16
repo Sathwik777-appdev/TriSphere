@@ -3,7 +3,7 @@
  * Manages offline state, sync queue, and connectivity
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { offlineDB, isOffline, addConnectivityListeners } from '../utils/offlineDB';
 import { Network } from '@capacitor/network';
 import { Capacitor } from '@capacitor/core';
@@ -12,6 +12,13 @@ export const useOffline = () => {
   const [offline, setOffline] = useState(isOffline());
   const [syncQueue, setSyncQueue] = useState([]);
   const [syncing, setSyncing] = useState(false);
+
+  const offlineRef = useRef(offline);
+  const syncingRef = useRef(syncing);
+
+  // Keep refs in sync with state
+  offlineRef.current = offline;
+  syncingRef.current = syncing;
 
   useEffect(() => {
     // Load sync queue on mount
@@ -22,7 +29,9 @@ export const useOffline = () => {
       if (Capacitor.isNativePlatform()) {
         try {
           const status = await Network.getStatus();
-          setOffline(!status.connected);
+          const currentOffline = !status.connected;
+          offlineRef.current = currentOffline;
+          setOffline(currentOffline);
         } catch (error) {
           console.warn('Failed to check initial Capacitor network status:', error);
         }
@@ -34,11 +43,13 @@ export const useOffline = () => {
     const cleanup = addConnectivityListeners(
       () => {
         console.log('📶 Back online!');
+        offlineRef.current = false;
         setOffline(false);
         syncQueuedOperations();
       },
       () => {
         console.log('📵 Gone offline');
+        offlineRef.current = true;
         setOffline(true);
       }
     );
@@ -67,8 +78,9 @@ export const useOffline = () => {
   };
 
   const syncQueuedOperations = async () => {
-    if (syncing || offline) return;
+    if (syncingRef.current || offlineRef.current) return;
 
+    syncingRef.current = true;
     setSyncing(true);
     try {
       const queue = await offlineDB.getSyncQueue();
@@ -87,6 +99,7 @@ export const useOffline = () => {
     } catch (error) {
       console.error('Sync failed:', error);
     } finally {
+      syncingRef.current = false;
       setSyncing(false);
     }
   };

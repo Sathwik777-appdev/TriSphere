@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { safeLocalStorage } from '../utils/storage';
 import { successToast } from '../utils/toast';
-import ProgressCharts from './ProgressCharts';
+
+const ProgressCharts = lazy(() => import('./ProgressCharts'));
 
 export const MyProgress = ({ studentId, selectedSubject }) => {
   const [progress, setProgress] = useState({
@@ -241,7 +242,9 @@ export const MyProgress = ({ studentId, selectedSubject }) => {
 
       {/* Progress Charts */}
       {!loading && (
-        <ProgressCharts studentId={studentId} selectedSubject={selectedSubject} />
+        <Suspense fallback={<div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>Loading charts...</div>}>
+          <ProgressCharts studentId={studentId} selectedSubject={selectedSubject} />
+        </Suspense>
       )}
     </div>
   );

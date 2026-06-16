@@ -717,7 +717,7 @@ function getGrade(percentage) {
 /**
  * Generate a PDF buffer from student data.
  */
-export async function generateStudentPDF(data) {
+export async function generateStudentPDF(data, browserInstance = null) {
     // Pre-fetch profile photo and convert to Base64 to avoid Puppeteer network timeouts
     if (data.profilePhoto && data.profilePhoto.startsWith('http')) {
         console.log(`🖼️ Pre-fetching profile photo: ${data.profilePhoto.substring(0, 50)}...`);
@@ -741,21 +741,25 @@ export async function generateStudentPDF(data) {
 
     const html = buildReportHTML(data);
 
-    let browser;
+    let browser = browserInstance;
+    let shouldCloseBrowser = !browserInstance;
+    let page = null;
     try {
-        browser = await puppeteer.launch({
-            headless: 'new',
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-gpu',
-                '--disable-web-security',
-                '--disable-features=IsolateOrigins,site-per-process'
-            ]
-        });
-        const page = await browser.newPage();
+        if (!browser) {
+            browser = await puppeteer.launch({
+                headless: 'new',
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-gpu',
+                    '--disable-web-security',
+                    '--disable-features=IsolateOrigins,site-per-process'
+                ]
+            });
+        }
+        page = await browser.newPage();
         
         // Listen for console logs inside the page
         page.on('console', msg => console.log(`[Puppeteer Page] ${msg.type().toUpperCase()}: ${msg.text()}`));
@@ -780,7 +784,20 @@ export async function generateStudentPDF(data) {
 
         return pdfBuffer;
     } finally {
-        if (browser) await browser.close();
+        if (page) {
+            try {
+                await page.close();
+            } catch (pageErr) {
+                console.error('Failed to close Puppeteer page:', pageErr.message);
+            }
+        }
+        if (browser && shouldCloseBrowser) {
+            try {
+                await browser.close();
+            } catch (browserErr) {
+                console.error('Failed to close Puppeteer browser:', browserErr.message);
+            }
+        }
     }
 }
 

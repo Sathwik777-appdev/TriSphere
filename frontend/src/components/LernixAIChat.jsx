@@ -12,7 +12,43 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { useIsMobile } from '../hooks/useMediaQuery';
+import { registerPlugin, Capacitor } from '@capacitor/core';
+import { speak, stopSpeaking } from '../utils/browserTTS';
 
+let AppPermissions = null;
+try {
+  if (Capacitor.isNativePlatform()) {
+    AppPermissions = registerPlugin('AppPermissions');
+  }
+} catch (e) {
+  console.warn('AppPermissions plugin registration failed, using web fallback:', e);
+}
+
+const requestMicPermission = async () => {
+  let micGranted = false;
+  if (Capacitor.isNativePlatform() && AppPermissions) {
+    try {
+      const res = await AppPermissions.requestPermission({ type: 'microphone' });
+      micGranted = !!res.granted;
+    } catch (err) {
+      console.warn('Native microphone permission request failed:', err);
+    }
+  } else {
+    // Web fallback check
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((t) => t.stop());
+        micGranted = true;
+      } catch (err) {
+        console.warn('Web microphone permission denied:', err);
+      }
+    } else {
+      micGranted = true; // speech recognition fallback
+    }
+  }
+  return micGranted;
+};
 
 // Daily limit configuration: Exactly matches the student's class number
 const getDailyLimitForGrade = (rawGrade) => {
@@ -37,7 +73,6 @@ export const LernixAIChat = ({ isMaximized = false }) => {
   // Text-to-Speech state
   const [speaking, setSpeaking] = useState(false);
   const [currentSpeakingIndex, setCurrentSpeakingIndex] = useState(null);
-  const speechSynthesisRef = useRef(null);
 
   // Daily limit tracking
   const getDailyUsage = () => {
@@ -448,58 +483,31 @@ export const LernixAIChat = ({ isMaximized = false }) => {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = 0;
     }
-    try { micStreamRef.current?.getTracks().forEach(t => t.stop()); } catch (e) {}
-    micStreamRef.current = null;
-    try { audioCtxRef.current?.close(); } catch (e) {}
-    audioCtxRef.current = null;
-    analyserRef.current = null;
     setMicLevel(0);
   };
 
-  const startMicAnalyser = async () => {
-    try {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx || !navigator.mediaDevices?.getUserMedia) return;
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      micStreamRef.current = stream;
-      const ctx = new Ctx();
-      audioCtxRef.current = ctx;
-      const source = ctx.createMediaStreamSource(stream);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 512;
-      analyser.smoothingTimeConstant = 0.7;
-      source.connect(analyser);
-      analyserRef.current = analyser;
-
-      const data = new Uint8Array(analyser.frequencyBinCount);
-      const tick = () => {
-        if (!analyserRef.current) return;
-        analyser.getByteTimeDomainData(data);
-        let peak = 0;
-        for (let i = 0; i < data.length; i++) {
-          const dev = Math.abs(data[i] - 128);
-          if (dev > peak) peak = dev;
-        }
-        const level = Math.min(1, (peak / 128) * 1.8);
-        setMicLevel(prev => {
-          const next = prev + (level - prev) * 0.35;
-          return next < 0.01 ? 0 : next;
-        });
-        rafRef.current = requestAnimationFrame(tick);
-      };
+  const startMicAnalyser = () => {
+    let active = true;
+    const tick = () => {
+      if (!active) return;
+      // Generate simulated organic voice wave fluctuation between 0.15 and 0.45
+      const time = Date.now() / 150;
+      const wave = Math.abs(Math.sin(time) * 0.2 + Math.cos(time * 0.7) * 0.1) + 0.15;
+      setMicLevel(wave);
       rafRef.current = requestAnimationFrame(tick);
-    } catch (err) {
-      console.warn('Mic visualiser unavailable:', err?.message || err);
-    }
+    };
+    rafRef.current = requestAnimationFrame(tick);
   };
 
   // ─── Mic: toggle dictation (Web Speech API) ───
-  const toggleMic = () => {
+  const toggleMic = async () => {
     if (isListening) {
       try { recognitionRef.current?.stop(); } catch (e) {}
-      stopMicAnalyser();
-      playBeep(440, 100);
-      setIsListening(false);
+      return;
+    }
+    const hasPermission = await requestMicPermission();
+    if (!hasPermission) {
+      warningToast('Microphone access is blocked. Please allow microphone permission in settings.');
       return;
     }
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -511,25 +519,47 @@ export const LernixAIChat = ({ isMaximized = false }) => {
     try {
       const r = new SR();
       r.lang = 'en-IN';
-      r.continuous = false;
+      r.continuous = true;
       r.interimResults = true;
       let finalText = '';
+      
+      r.onstart = () => {
+        console.log('[LernixChat] Speech recognition started');
+      };
       r.onresult = (event) => {
-        let interim = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const t = event.results[i][0].transcript;
-          if (event.results[i].isFinal) finalText += t;
-          else interim += t;
+        console.log('[LernixChat] Speech recognition result received');
+        let finalTrans = '';
+        let interimTrans = '';
+        for (let i = 0; i < event.results.length; i++) {
+          const text = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTrans += (finalTrans ? ' ' : '') + text.trim();
+          } else {
+            interimTrans += (interimTrans ? ' ' : '') + text.trim();
+          }
         }
-        const live = (finalText + interim).trim();
-        if (live) setInput(live);
+        const live = (finalTrans + ' ' + interimTrans).trim();
+        setInput(live);
       };
       r.onerror = (e) => {
-        if (e.error !== 'no-speech') warningToast('Voice input error');
+        const code = e?.error || 'unknown';
+        console.error('[LernixChat] Speech recognition error:', code);
+        if (code === 'no-speech' || code === 'aborted') return;
+        
+        let msg = 'Voice input failed.';
+        if (code === 'not-allowed' || code === 'service-not-allowed') {
+          msg = 'Microphone access is blocked. Please allow mic permission in settings.';
+        } else if (code === 'network') {
+          msg = 'Speech recognition needs internet access.';
+        } else if (code === 'audio-capture') {
+          msg = 'No microphone detected.';
+        }
+        warningToast(msg);
         stopMicAnalyser();
         setIsListening(false);
       };
       r.onend = () => {
+        console.log('[LernixChat] Speech recognition ended');
         stopMicAnalyser();
         playBeep(440, 100);
         setIsListening(false);
@@ -539,6 +569,7 @@ export const LernixAIChat = ({ isMaximized = false }) => {
       setIsListening(true);
       startMicAnalyser();
     } catch (err) {
+      console.error('[LernixChat] Could not start speech recognition:', err);
       warningToast('Could not start voice input.');
       stopMicAnalyser();
       setIsListening(false);
@@ -731,18 +762,20 @@ export const LernixAIChat = ({ isMaximized = false }) => {
   };
 
   // Text-to-Speech functions
-  const handleSpeak = (text, messageIndex) => {
+  const handleSpeak = async (text, messageIndex) => {
     if (!text) return;
 
-    // Stop current speech if any
-    if (speechSynthesisRef.current) {
-      window.speechSynthesis.cancel();
-      if (currentSpeakingIndex === messageIndex) {
-        setSpeaking(false);
-        setCurrentSpeakingIndex(null);
-        return;
-      }
+    if (currentSpeakingIndex === messageIndex && speaking) {
+      await stopSpeaking();
+      setSpeaking(false);
+      setCurrentSpeakingIndex(null);
+      return;
     }
+
+    // Stop current speech if any
+    await stopSpeaking();
+    setSpeaking(true);
+    setCurrentSpeakingIndex(messageIndex);
 
     // Clean text from HTML tags and markdown
     const cleanText = text
@@ -754,48 +787,26 @@ export const LernixAIChat = ({ isMaximized = false }) => {
       .replace(/\n\n/g, '. ') // Replace double line breaks with periods
       .replace(/\n/g, ' '); // Replace single line breaks with spaces
 
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-    utterance.lang = 'en-IN'; // Indian English
-
-    // Try to select Indian English voice if available
-    const voices = window.speechSynthesis.getVoices();
-    const indianVoice = voices.find(voice =>
-      voice.lang === 'en-IN' ||
-      voice.lang.startsWith('en-IN') ||
-      voice.name.toLowerCase().includes('india')
-    );
-    if (indianVoice) {
-      utterance.voice = indianVoice;
+    try {
+      await speak(cleanText, {
+        rate: 0.9,
+        preferFemale: true,
+        lang: 'en-IN'
+      });
+      // Reset only if we are still speaking this specific index
+      setSpeaking(false);
+      setCurrentSpeakingIndex(null);
+    } catch (e) {
+      console.error('Lernix AI speech error:', e);
+      setSpeaking(false);
+      setCurrentSpeakingIndex(null);
     }
-
-    utterance.onstart = () => {
-      setSpeaking(true);
-      setCurrentSpeakingIndex(messageIndex);
-    };
-
-    utterance.onend = () => {
-      setSpeaking(false);
-      setCurrentSpeakingIndex(null);
-    };
-
-    utterance.onerror = () => {
-      setSpeaking(false);
-      setCurrentSpeakingIndex(null);
-    };
-
-    speechSynthesisRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
   };
 
   // Cleanup speech on unmount
   useEffect(() => {
     return () => {
-      if (speechSynthesisRef.current) {
-        window.speechSynthesis.cancel();
-      }
+      stopSpeaking();
     };
   }, []);
 

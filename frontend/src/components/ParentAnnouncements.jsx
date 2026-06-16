@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../services/firebase';
+import { safeLocalStorage } from '../utils/storage';
 
 export const ParentAnnouncements = ({ childClass, parentId, schoolName }) => {
   const [announcements, setAnnouncements] = useState([]);
@@ -9,7 +10,7 @@ export const ParentAnnouncements = ({ childClass, parentId, schoolName }) => {
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
-        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        const userData = safeLocalStorage.get('userData', {});
         const isDeveloper = userData?.role === 'developer';
         const schoolFilter = isDeveloper ? [] : [where('schoolName', '==', schoolName || '')];
 

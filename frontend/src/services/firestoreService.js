@@ -779,10 +779,10 @@ export const awardBadge = async (userId, badgeId) => {
           
           // Update local storage user cache if active session
           try {
-            const cachedUser = JSON.parse(localStorage.getItem('userData') || '{}');
+            const cachedUser = safeLocalStorage.get('userData', {});
             if (cachedUser.uid === userId) {
               cachedUser.badges = [...(cachedUser.badges || []), badgeId];
-              localStorage.setItem('userData', JSON.stringify(cachedUser));
+              safeLocalStorage.set('userData', cachedUser);
               // Dispatch storage event to trigger immediate UI refreshes
               window.dispatchEvent(new Event('storage'));
             }

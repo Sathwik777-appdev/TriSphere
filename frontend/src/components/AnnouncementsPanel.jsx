@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, addDoc, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
+import { safeLocalStorage } from '../utils/storage';
 
 export const AnnouncementsPanel = ({ userId, userName, classNumber, schoolName, onAnnouncementCreated }) => {
   const [title, setTitle] = useState('');
@@ -17,7 +18,7 @@ export const AnnouncementsPanel = ({ userId, userName, classNumber, schoolName, 
       if (!classNumber) return;
 
       try {
-        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        const userData = safeLocalStorage.get('userData', {});
         const isDeveloper = userData?.role === 'developer';
         const schoolFilter = isDeveloper ? [] : [where('schoolName', '==', schoolName || '')];
 
@@ -160,7 +161,7 @@ export const AnnouncementsPanel = ({ userId, userName, classNumber, schoolName, 
       setError('');
 
       // Reload announcements
-      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+      const userData = safeLocalStorage.get('userData', {});
       const isDeveloper = userData?.role === 'developer';
       const schoolFilter = isDeveloper ? [] : [where('schoolName', '==', schoolName || '')];
 

@@ -211,27 +211,15 @@ window.onunhandledrejection = function (event) {
   logUnhandledRejection(event.reason);
 };
 
-// ─── Block pinch-zoom & double-tap-zoom on mobile ───
+// ─── Block pinch-zoom on mobile ───
 // The viewport meta tag with `user-scalable=no` covers most browsers, but
-// iOS Safari (≥10) intentionally ignores it for accessibility. These two
-// guards close the loop:
-//   1. `gesturestart` is iOS-only and fires for two-finger pinch — calling
-//      preventDefault here stops the zoom.
-//   2. A double-tap protection using touchend timestamp prevents the
-//      legacy "double-tap to zoom" gesture on iOS too.
+// iOS Safari (≥10) intentionally ignores it for accessibility.
+// `gesturestart` is iOS-only and fires for two-finger pinch — calling
+// preventDefault here stops the zoom.
 if (typeof document !== 'undefined') {
   document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
   document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
   document.addEventListener('gestureend', (e) => e.preventDefault(), { passive: false });
-
-  let lastTouchEnd = 0;
-  document.addEventListener('touchend', (e) => {
-    const now = Date.now();
-    if (now - lastTouchEnd <= 300) {
-      e.preventDefault();
-    }
-    lastTouchEnd = now;
-  }, { passive: false });
 }
 
 try {

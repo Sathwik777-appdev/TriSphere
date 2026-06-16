@@ -75,6 +75,7 @@ import StudentSubmissions from '../components/StudentSubmissions';
 import DiscussionForum from '../components/DiscussionForum';
 import { ProgressReport } from '../components/ProgressReport';
 import SimulationAssignment from '../components/SimulationAssignment';
+import TeacherEarlyWarning from '../components/TeacherEarlyWarning';
 
 
 import {
@@ -516,6 +517,7 @@ export default function TeacherDashboardMobile() {
     reports: 'Reports',
     activity: 'Activity',
     simulations: 'Simulation Lab',
+    earlywarning: 'Early Warning',
   };
 
   const firstName = useMemo(() => {
@@ -634,6 +636,11 @@ export default function TeacherDashboardMobile() {
                   icon={<ProgressIcon size={18} color={C.success} />}
                   label="Reports"
                   onClick={() => goToTab('reports')}
+                />
+                <SettingsRow
+                  icon={<TargetIcon size={18} color={C.danger} />}
+                  label="Early Warning"
+                  onClick={() => goToTab('earlywarning')}
                 />
                 <SettingsRow
                   icon={<TargetIcon size={18} color={C.warning} />}
@@ -1143,6 +1150,20 @@ export default function TeacherDashboardMobile() {
             </PanelWrap>
           </div>
         )}
+
+        {mountedTabs.has('earlywarning') && (
+          <div style={{ display: activeTab === 'earlywarning' ? 'block' : 'none' }}>
+            <PanelWrap>
+              <ErrorBoundary mini context="Early Warning">
+                <TeacherEarlyWarning 
+                  classNumber={selectedClass} 
+                  subject={selectedSubject} 
+                  schoolName={userData?.schoolName || ''} 
+                />
+              </ErrorBoundary>
+            </PanelWrap>
+          </div>
+        )}
       </main>
 
       {/* ── Bottom nav (5 slots) ───────────────────────────────────── */}
@@ -1388,6 +1409,7 @@ function MoreHub({ onPickTab, onOpenDiscussions, onOpenSettings }) {
     { id: 'meetings', label: 'Meetings', icon: <TimerIcon size={20} color={C.purple} />, sub: 'Parents & 1:1s' },
     { id: '__discussions', label: 'Discussion Forum', icon: <ForumIcon size={20} color={C.blue} />, sub: 'Threads' },
     { id: 'reports', label: 'Reports', icon: <ProgressIcon size={20} color={C.success} />, sub: 'Performance' },
+    { id: 'earlywarning', label: 'Early Warning', icon: <TargetIcon size={20} color={C.danger} />, sub: 'At-risk students' },
     { id: 'activity', label: 'Activity Log', icon: <TargetIcon size={20} color={C.warning} />, sub: 'Class history' },
     { id: '__settings', label: 'Settings', icon: <SettingsIcon size={20} color="#cbd5e1" />, sub: 'Account & privacy' },
   ];

@@ -25,6 +25,7 @@ export const MeetingBooking = ({ childId, childName, childClass, schoolName }) =
     useEffect(() => {
         if (!user?.uid || !childClass) return;
 
+        let isMounted = true;
         let unsubscribe;
 
         const fetchData = async () => {
@@ -54,6 +55,8 @@ export const MeetingBooking = ({ childId, childName, childClass, schoolName }) =
                     ...schoolFilter
                 );
                 const teachersSnapshot = await getDocs(teachersQuery);
+                if (!isMounted) return;
+
                 const teacherList = teachersSnapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
@@ -80,15 +83,23 @@ export const MeetingBooking = ({ childId, childName, childClass, schoolName }) =
                         return dateB - dateA;
                     });
 
-                    setMeetings(meetingList);
+                    if (isMounted) {
+                        setMeetings(meetingList);
+                    }
                 }, (error) => {
                     console.error('Error listening to meetings:', error);
                 });
 
+                if (!isMounted && unsubscribe) {
+                    unsubscribe();
+                }
+
             } catch (error) {
                 console.error('Error fetching data:', error);
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         };
 
@@ -96,6 +107,7 @@ export const MeetingBooking = ({ childId, childName, childClass, schoolName }) =
 
         // Cleanup listener on unmount
         return () => {
+            isMounted = false;
             if (unsubscribe) {
                 unsubscribe();
             }

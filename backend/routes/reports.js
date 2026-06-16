@@ -418,27 +418,51 @@ router.post('/generate-batch', verifyAuth, async (req, res) => {
 
         // Dynamic import of archiver for ZIP
         const archiver = (await import('archiver')).default;
+        const puppeteer = (await import('puppeteer')).default;
 
-        res.setHeader('Content-Type', 'application/zip');
-        res.setHeader('Content-Disposition', `attachment; filename="class_${classNumber}_reports_${getReportPeriod().month}_${getReportPeriod().year}.zip"`);
+        const browser = await puppeteer.launch({
+            headless: 'new',
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-gpu',
+                '--disable-web-security',
+                '--disable-features=IsolateOrigins,site-per-process'
+            ]
+        });
 
-        const archive = archiver('zip', { zlib: { level: 5 } });
-        archive.pipe(res);
+        try {
+            res.setHeader('Content-Type', 'application/zip');
+            res.setHeader('Content-Disposition', `attachment; filename="class_${classNumber}_reports_${getReportPeriod().month}_${getReportPeriod().year}.zip"`);
 
-        for (const studentDoc of students) {
-            try {
-                const reportData = await fetchStudentReportData(db, studentDoc.id, classNumber, schoolName, cachedClassQuizzes);
-                const pdfBuffer = await generateStudentPDF(reportData);
-                const safeName = (reportData.studentName || studentDoc.id).replace(/[^a-zA-Z0-9_-]/g, '_');
-                archive.append(Buffer.from(pdfBuffer), { name: `${safeName}_report.pdf` });
-                console.log(`  ✅ Generated for ${reportData.studentName}`);
-            } catch (err) {
-                console.error(`  ❌ Failed for ${studentDoc.id}:`, err.message);
+            const archive = archiver('zip', { zlib: { level: 5 } });
+            archive.pipe(res);
+
+            for (const studentDoc of students) {
+                try {
+                    const reportData = await fetchStudentReportData(db, studentDoc.id, classNumber, schoolName, cachedClassQuizzes);
+                    const pdfBuffer = await generateStudentPDF(reportData, browser);
+                    const safeName = (reportData.studentName || studentDoc.id).replace(/[^a-zA-Z0-9_-]/g, '_');
+                    archive.append(Buffer.from(pdfBuffer), { name: `${safeName}_report.pdf` });
+                    console.log(`  ✅ Generated for ${reportData.studentName}`);
+                } catch (err) {
+                    console.error(`  ❌ Failed for ${studentDoc.id}:`, err.message);
+                }
+            }
+
+            await archive.finalize();
+            console.log(`📦 Batch report ZIP sent for class ${classNumber}`);
+        } finally {
+            if (browser) {
+                try {
+                    await browser.close();
+                } catch (browserErr) {
+                    console.error('Failed to close Puppeteer browser in batch route:', browserErr.message);
+                }
             }
         }
-
-        await archive.finalize();
-        console.log(`📦 Batch report ZIP sent for class ${classNumber}`);
     } catch (error) {
         console.error('Batch report error:', error);
         res.status(500).json({ error: 'Failed to generate batch reports: ' + error.message });

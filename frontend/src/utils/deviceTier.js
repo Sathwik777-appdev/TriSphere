@@ -24,6 +24,8 @@
  * "Device-tier degradation" section there.
  */
 
+let listenersRegistered = false;
+
 const apply = (tier) => {
   if (typeof document === 'undefined') return;
   const b = document.body;
@@ -49,14 +51,17 @@ export const detectAndApplyDeviceTier = () => {
   apply(tier);
 
   // Re-evaluate on connection change (data-saver toggled, switched to 3g…)
-  if (conn && typeof conn.addEventListener === 'function') {
-    conn.addEventListener('change', () => detectAndApplyDeviceTier());
+  if (!listenersRegistered && typeof window !== 'undefined') {
+    if (conn && typeof conn.addEventListener === 'function') {
+      conn.addEventListener('change', () => detectAndApplyDeviceTier());
+    }
+    // Re-evaluate on viewport resize for the is-mobile class.
+    window.addEventListener('resize', () => {
+      if (window.innerWidth < 768) document.body.classList.add('is-mobile');
+      else document.body.classList.remove('is-mobile');
+    }, { passive: true });
+    listenersRegistered = true;
   }
-  // Re-evaluate on viewport resize for the is-mobile class.
-  window.addEventListener('resize', () => {
-    if (window.innerWidth < 768) document.body.classList.add('is-mobile');
-    else document.body.classList.remove('is-mobile');
-  }, { passive: true });
 
   // Expose for debugging in console: `window.__deviceTier`
   if (typeof window !== 'undefined') {

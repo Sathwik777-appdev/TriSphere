@@ -7,6 +7,7 @@ import { updatePassword, reauthenticateWithCredential, PhoneAuthProvider } from 
 import { successToast, errorToast, warningToast } from '../utils/toast';
 import { safeLocalStorage } from '../utils/storage';
 import { offlineDB } from '../utils/offlineDB';
+import { offlineAssetManager } from '../services/offlineAssetManager';
 import { API_BASE_URL } from '../utils/apiBase';
 
 const AVATAR_IMAGES = {
@@ -27,6 +28,9 @@ export const AccountSettings = ({ onClose }) => {
     // Companion settings
     const [equippedAvatar, setEquippedAvatar] = useState(null);
     const [equippedAvatarName, setEquippedAvatarName] = useState('');
+
+    // Storage settings
+    const [storageUsedMB, setStorageUsedMB] = useState('0.00');
 
     // Phone binding states
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -82,6 +86,12 @@ export const AccountSettings = ({ onClose }) => {
             // Do not clear recaptcha
         };
     }, [user?.uid]);
+
+    useEffect(() => {
+        if (activeSection === 'storage') {
+            offlineAssetManager.getStorageUsageMB().then(setStorageUsedMB).catch(console.error);
+        }
+    }, [activeSection]);
     
     // Helper to check daily OTP limit (5 per day)
     const checkOtpLimit = async () => {
@@ -645,6 +655,9 @@ export const AccountSettings = ({ onClose }) => {
                                     If the app is running slowly or you want to free up space, you can clear the locally downloaded content and cache. 
                                     This will <strong>NOT</strong> delete your account, progress, or uploads.
                                 </p>
+                                <p style={{ color: '#10b981', fontWeight: 600, marginTop: 8, marginBottom: 16 }}>
+                                    Offline Assets (PDFs): {storageUsedMB} MB
+                                </p>
                                 <button
                                     onClick={async () => {
                                         if (window.confirm('Are you sure you want to clear all offline app data? You will need to re-download lessons to view them offline.')) {
@@ -661,6 +674,10 @@ export const AccountSettings = ({ onClose }) => {
                                                     }
                                                 }
                                                 keysToRemove.forEach(key => localStorage.removeItem(key));
+                                                
+                                                await offlineAssetManager.clearAll();
+                                                setStorageUsedMB('0.00');
+
                                                 successToast('App storage cleared successfully!');
                                             } catch (error) {
                                                 errorToast('Failed to clear storage: ' + error.message);

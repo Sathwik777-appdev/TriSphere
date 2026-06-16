@@ -36,66 +36,91 @@ export function useBackButton() {
   const armedPathRef = useRef(null);
 
   useEffect(() => {
-    if (Capacitor.isNativePlatform()) {
-      // ─── NATIVE APP ENVIRONMENT (Capacitor Listener) ───
-      const handleNativeBack = async () => {
-        const currentPath = window.location.pathname;
-        const now = Date.now();
+    if (!Capacitor.isNativePlatform()) return;
 
-        if (isRootPath(currentPath)) {
-          const withinExitWindow = now - lastBackRef.current < EXIT_WINDOW_MS;
-          if (withinExitWindow) {
-            App.exitApp();
-          } else {
-            lastBackRef.current = now;
-            warningToast('Press back again to exit');
-          }
-        } else {
-          // If there is back history in the app, go back, otherwise go to home page
-          if (window.history.state && typeof window.history.state.idx === 'number' && window.history.state.idx > 0) {
-            navigate(-1);
-          } else {
-            navigate('/');
-          }
+    // ─── NATIVE APP ENVIRONMENT (Capacitor Listener) ───
+    const handleNativeBack = async () => {
+      // 1. Check if there are active modals or tabs to close first
+      if (window.activeModals && window.activeModals.length > 0) {
+        const closeTopmostModal = window.activeModals.pop();
+        if (closeTopmostModal) {
+          closeTopmostModal();
+          return;
         }
-      };
+      }
 
-      const backButtonListener = App.addListener('backButton', handleNativeBack);
+      const currentPath = window.location.pathname;
+      const now = Date.now();
 
-      return () => {
-        backButtonListener.then(listener => listener.remove());
-      };
-    } else {
-      // ─── BROWSER / PWA ENVIRONMENT (Popstate duplicate-history-trap) ───
-      if (!isRootPath(pathname)) {
+      if (isRootPath(currentPath)) {
+        const withinExitWindow = now - lastBackRef.current < EXIT_WINDOW_MS;
+        if (withinExitWindow) {
+          App.exitApp();
+        } else {
+          lastBackRef.current = now;
+          warningToast('Press back again to exit');
+        }
+      } else {
+        // If there is back history in the app, go back, otherwise go to home page
+        if (window.history.state && typeof window.history.state.idx === 'number' && window.history.state.idx > 0) {
+          navigate(-1);
+        } else {
+          navigate('/');
+        }
+      }
+    };
+
+    const backButtonListener = App.addListener('backButton', handleNativeBack);
+
+    return () => {
+      backButtonListener.then(listener => listener.remove());
+    };
+  }, [navigate]);
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) return;
+
+    // ─── BROWSER / PWA ENVIRONMENT (Popstate duplicate-history-trap) ───
+    if (!isRootPath(pathname)) {
+      armedPathRef.current = null;
+      return;
+    }
+
+    // Push duplicate entry for root path
+    if (armedPathRef.current !== pathname) {
+      navigate(pathname);
+      armedPathRef.current = pathname;
+    }
+
+    const onPopState = () => {
+      // 1. Check if there are active modals or tabs to close first
+      if (window.activeModals && window.activeModals.length > 0) {
+        const closeTopmostModal = window.activeModals.pop();
+        if (closeTopmostModal) {
+          closeTopmostModal();
+          // Push duplicate entry again so the browser history stack stays armed
+          navigate(pathname);
+          armedPathRef.current = pathname;
+          return;
+        }
+      }
+
+      const now = Date.now();
+      const withinExitWindow = now - lastBackRef.current < EXIT_WINDOW_MS;
+
+      if (withinExitWindow) {
         armedPathRef.current = null;
+        try { window.close(); } catch (e) {}
         return;
       }
 
-      // Push duplicate entry for root path
-      if (armedPathRef.current !== pathname) {
-        navigate(pathname);
-        armedPathRef.current = pathname;
-      }
+      lastBackRef.current = now;
+      navigate(pathname);
+      armedPathRef.current = pathname;
+      warningToast('Press back again to exit');
+    };
 
-      const onPopState = () => {
-        const now = Date.now();
-        const withinExitWindow = now - lastBackRef.current < EXIT_WINDOW_MS;
-
-        if (withinExitWindow) {
-          armedPathRef.current = null;
-          try { window.close(); } catch (e) {}
-          return;
-        }
-
-        lastBackRef.current = now;
-        navigate(pathname);
-        armedPathRef.current = pathname;
-        warningToast('Press back again to exit');
-      };
-
-      window.addEventListener('popstate', onPopState);
-      return () => window.removeEventListener('popstate', onPopState);
-    }
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
   }, [pathname, navigate]);
 }

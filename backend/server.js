@@ -627,24 +627,86 @@ const handleTTS = async (req, res) => {
             console.warn('[TTS] Google Cloud TTS failed or not configured, trying public translate fallback:', gcpError.message || gcpError);
         }
 
-        // 2. Fallback to free public Google Translate TTS
+        // 2. Fallback to free public Google Translate TTS (supports text chunking to avoid 200-char limits)
         let languageCode = lang || 'en-IN';
-        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${languageCode}&client=tw-ob&q=${encodeURIComponent(text)}`;
         
-        const fetchRes = await fetch(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-        });
+        // Helper to split text into safe chunks under 180 characters along sentence boundaries
+        const splitTextIntoChunks = (textStr, maxLength = 180) => {
+            const splitLongString = (str, limit) => {
+                const words = str.split(/\s+/);
+                const subChunks = [];
+                let currentSub = "";
+                for (const word of words) {
+                    if ((currentSub + " " + word).trim().length > limit) {
+                        if (currentSub.trim()) {
+                            subChunks.push(currentSub.trim());
+                        }
+                        currentSub = word;
+                    } else {
+                        currentSub = currentSub ? (currentSub + " " + word) : word;
+                    }
+                }
+                if (currentSub.trim()) {
+                    subChunks.push(currentSub.trim());
+                }
+                return subChunks;
+            };
 
-        if (!fetchRes.ok) {
-            throw new Error(`Public Translation TTS fetch failed with status: ${fetchRes.status}`);
+            const sentences = textStr.match(/[^.!?]+[.!?]+|[^.!?]+/g) || [textStr];
+            const resultChunks = [];
+            let currentChunk = "";
+            
+            for (const sentence of sentences) {
+                if (sentence.length > maxLength) {
+                    if (currentChunk.trim()) {
+                        resultChunks.push(currentChunk.trim());
+                        currentChunk = "";
+                    }
+                    const subChunks = splitLongString(sentence, maxLength);
+                    for (let i = 0; i < subChunks.length - 1; i++) {
+                        resultChunks.push(subChunks[i]);
+                    }
+                    currentChunk = subChunks[subChunks.length - 1] || "";
+                } else {
+                    if ((currentChunk + sentence).length > maxLength) {
+                        if (currentChunk.trim()) {
+                            resultChunks.push(currentChunk.trim());
+                        }
+                        currentChunk = sentence;
+                    } else {
+                        currentChunk += sentence;
+                    }
+                }
+            }
+            if (currentChunk.trim()) {
+                resultChunks.push(currentChunk.trim());
+            }
+            return resultChunks;
+        };
+
+        const chunks = splitTextIntoChunks(text);
+        console.log(`[TTS] Splitting long text into ${chunks.length} chunks for public fallback`);
+        const audioBuffers = [];
+
+        for (const chunk of chunks) {
+            const chunkUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${languageCode}&client=tw-ob&q=${encodeURIComponent(chunk)}`;
+            const fetchRes = await fetch(chunkUrl, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+            });
+
+            if (!fetchRes.ok) {
+                throw new Error(`Public Translation TTS fetch failed with status: ${fetchRes.status}`);
+            }
+
+            const arrayBuffer = await fetchRes.arrayBuffer();
+            audioBuffers.push(Buffer.from(arrayBuffer));
         }
 
-        const arrayBuffer = await fetchRes.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const base64Audio = buffer.toString('base64');
-        console.log(`[TTS] Synthesized successfully using Public Translation TTS fallback`);
+        const combinedBuffer = Buffer.concat(audioBuffers);
+        const base64Audio = combinedBuffer.toString('base64');
+        console.log(`[TTS] Synthesized successfully using Public Translation TTS fallback (${chunks.length} chunks combined)`);
         return res.json({ audio: base64Audio });
 
     } catch (error) {

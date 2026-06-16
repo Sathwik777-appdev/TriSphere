@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../services/firebase';
+import { safeLocalStorage } from '../utils/storage';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Capacitor } from '@capacitor/core';
@@ -29,7 +30,7 @@ export const GradedAssignments = ({ studentId, schoolName }) => {
   const fetchSubmissions = async () => {
     try {
       setLoading(true);
-      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+      const userData = safeLocalStorage.get('userData', {});
       const isDeveloper = userData?.role === 'developer';
       // studentSubmissions has no schoolName field — filter by studentId only
       const q = query(
@@ -63,7 +64,7 @@ export const GradedAssignments = ({ studentId, schoolName }) => {
 
   const fetchQuizResults = async () => {
     try {
-      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+      const userData = safeLocalStorage.get('userData', {});
       const isDeveloper = userData?.role === 'developer';
       // quizResults has no schoolName field — filter by studentId only
       const q = query(

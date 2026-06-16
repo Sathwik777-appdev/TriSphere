@@ -16,6 +16,7 @@ if (Capacitor.isNativePlatform()) {
 import { safeLocalStorage } from '../utils/storage';
 import { db } from '../services/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../context/ThemeContext';
 import AnimatedLogo from '../components/AnimatedLogo';
 
@@ -40,6 +41,7 @@ const useIsMobile = (breakpoint = 768) => {
 
 const LandingPage = () => {
     const navigate = useNavigate();
+    const { isAuthenticated, role } = useAuth();
     const isMobile = useIsMobile();
     const [isScrolled, setIsScrolled] = useState(false);
     const [activeTab, setActiveTab] = useState('students');
@@ -74,6 +76,17 @@ const LandingPage = () => {
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    // Redirect authenticated users to their dashboards
+    useEffect(() => {
+        if (isAuthenticated && role) {
+            if (role === 'teacher') navigate('/dashboard/teacher', { replace: true });
+            else if (role === 'student') navigate('/dashboard/student', { replace: true });
+            else if (role === 'parent') navigate('/dashboard/parent', { replace: true });
+            else if (role === 'admin' || role === 'principal') navigate('/dashboard/admin', { replace: true });
+            else if (role === 'developer') navigate('/dashboard/developer', { replace: true });
+        }
+    }, [isAuthenticated, role, navigate]);
 
     const containerVariants = {
         hidden: { opacity: 0 },

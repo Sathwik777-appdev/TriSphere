@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, orderBy, doc, updateDoc, getDoc, limit } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { autoGradeAssignment } from '../services/aiService';
+import { safeLocalStorage } from '../utils/storage';
 const StudentSubmissions = ({ classNumber, subject, schoolName }) => {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +64,7 @@ const StudentSubmissions = ({ classNumber, subject, schoolName }) => {
       setLoading(true);
       console.log('Fetching submissions for:', { classNumber, subject });
 
-      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+      const userData = safeLocalStorage.get('userData', {});
       const isDeveloper = userData?.role === 'developer';
 
       // Fetch submissions matching subject, ordered by date and limited to 100

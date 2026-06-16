@@ -523,29 +523,21 @@ export default function AstraCheckIn() {
                 console.warn('[ASTRA] onnomatch — engine couldn\'t recognise anything');
             };
 
-            recognition.onresult = (evt) => {
-                // Walk ALL results (not just new ones) — interim chunks
-                // can morph as the engine refines its guess, so we
-                // rebuild the "interim so far" each time. Final chunks
-                // are append-only and accumulate.
-                let newFinal = '';
-                let interim = '';
-                for (let i = 0; i < evt.results.length; i++) {
-                    const text = evt.results[i][0].transcript;
-                    if (evt.results[i].isFinal) {
-                        if (i >= evt.resultIndex) newFinal += text;
-                    } else {
-                        interim += text;
-                    }
-                }
-                if (newFinal) finalTranscriptRef.current += newFinal;
-                interimTranscriptRef.current = interim;
-                // Live, on-screen preview so students see their words
-                // showing up as they speak — confirms recognition is
-                // actually receiving audio (especially important on
-                // mobile where DevTools isn't available).
-                setLivePreview((finalTranscriptRef.current + ' ' + interim).trim());
-            };
+             recognition.onresult = (evt) => {
+                 let finalTrans = '';
+                 let interimTrans = '';
+                 for (let i = 0; i < evt.results.length; i++) {
+                     const text = evt.results[i][0].transcript;
+                     if (evt.results[i].isFinal) {
+                         finalTrans += (finalTrans ? ' ' : '') + text.trim();
+                     } else {
+                         interimTrans += (interimTrans ? ' ' : '') + text.trim();
+                     }
+                 }
+                 finalTranscriptRef.current = finalTrans;
+                 interimTranscriptRef.current = interimTrans;
+                 setLivePreview((finalTrans + ' ' + interimTrans).trim());
+             };
 
             recognition.onerror = (evt) => {
                 const code = evt?.error || 'unknown';
@@ -665,6 +657,10 @@ export default function AstraCheckIn() {
         
         // Browser TTS unavailable, blocked, or timed out mid-flight
         try {
+            if (!navigator.onLine) {
+                console.warn('ASTRA: Offline, skipping Cloud TTS fallback fetch');
+                return;
+            }
             if (fallbackBase64) {
                 await playBase64Audio(fallbackBase64);
                 return;

@@ -1251,7 +1251,8 @@ export const AdminDashboard = () => {
       await updateDoc(userDocRef, {
         suspended: true,
         suspendedBy: userData?.username || 'Principal',
-        suspendedAt: Timestamp.now()
+        suspendedAt: Timestamp.now(),
+        fcmTokens: []
       });
 
       setNotification({ show: true, message: `Account for ${selectedUser.username} has been suspended.`, type: 'success' });

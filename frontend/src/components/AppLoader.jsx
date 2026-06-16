@@ -212,10 +212,14 @@ const AppLoader = ({ message, duration = 5000 }) => {
                             style={{ padding: '10px' }}
                             onClick={async (e) => {
                                 e.preventDefault();
-                                if (Capacitor.isNativePlatform()) {
-                                    await Browser.open({ url: "https://www.yugnext-ai.com" });
-                                } else {
-                                    window.open("https://www.yugnext-ai.com", "_blank");
+                                try {
+                                    if (Capacitor.isNativePlatform()) {
+                                        await Browser.open({ url: "https://www.yugnext-ai.com" });
+                                    } else {
+                                        window.open("https://www.yugnext-ai.com", "_blank");
+                                    }
+                                } catch (err) {
+                                    console.error('Failed to open URL:', err);
                                 }
                             }}
                         >

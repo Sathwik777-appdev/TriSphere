@@ -57,7 +57,34 @@ const TermsAndConditions = lazyRetry(() => import('./pages/TermsAndConditions'))
 // notice for every individual user regardless of any school contract.
 
 
-// HomeRedirect removed to ensure LandingPage always shows at root
+// HomeRedirect properly routes returning users to bypass LandingPage completely
+const HomeRedirect = () => {
+  const { isAuthenticated, role, isAppLoading, loading } = useAuth();
+
+  // If auth state is still loading, just return null (the global AppLoader handles the visual)
+  if (isAppLoading || loading) return null;
+
+  // If authenticated, redirect to appropriate dashboard
+  if (isAuthenticated && role) {
+    switch (role) {
+      case 'teacher': return <Navigate to="/dashboard/teacher" replace />;
+      case 'student': return <Navigate to="/dashboard/student" replace />;
+      case 'parent': return <Navigate to="/dashboard/parent" replace />;
+      case 'admin':
+      case 'principal': return <Navigate to="/dashboard/admin" replace />;
+      case 'developer': return <Navigate to="/dashboard/developer" replace />;
+      default: return <LandingPage />;
+    }
+  }
+
+  // Not authenticated - check if they should see landing page
+  const hasSeenLanding = safeLocalStorage.get('has_seen_landing') === true;
+  if (hasSeenLanding) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <LandingPage />;
+};
 
 // Lives INSIDE BrowserRouter so useLocation() works. Owns the Android-style
 // double-back-to-exit behaviour: sub-routes navigate normally, root routes
@@ -69,7 +96,7 @@ function BackButtonHandler() {
 
 function AppContent() {
   usePushNotifications();
-  const { isAppLoading, isAuthenticated, role } = useAuth();
+  const { isAppLoading, loading, isAuthenticated, role } = useAuth();
   const [sleepLocked, setSleepLocked] = useState(false);
 
   useEffect(() => {
@@ -99,7 +126,7 @@ function AppContent() {
         
         {/* 5-second Loading Overlay */}
         <AnimatePresence>
-          {isAppLoading && (
+          {(isAppLoading || loading) && (
             <motion.div
               initial={{ opacity: 1, pointerEvents: 'auto' }}
               animate={{ opacity: 1, pointerEvents: 'auto' }}
@@ -123,7 +150,7 @@ function AppContent() {
         <Suspense fallback={<AppLoader />}>
           <Routes>
             {/* Public / Marketing Routes (No Permissions Gate) */}
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<HomeRedirect />} />
             <Route path="/about" element={<AboutMethodology />} />
             <Route path="/terms" element={<TermsAndConditions />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />

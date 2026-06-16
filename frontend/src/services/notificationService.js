@@ -14,6 +14,10 @@ export const requestNotificationPermission = async (userId) => {
       console.log('Notification permission granted.');
       
       try {
+        if (!messaging) {
+          console.warn('requestNotificationPermission: FCM is not initialized/supported on this device.');
+          return false;
+        }
         const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
         if (currentToken) {
           console.log('FCM Token retrieved:', currentToken.substring(0, 20) + '...');
@@ -58,6 +62,11 @@ const saveTokenToDatabase = async (token, userId) => {
 
 export const onMessageListener = () =>
   new Promise((resolve) => {
+    if (!messaging) {
+      console.warn('onMessageListener: FCM is not initialized/supported on this device.');
+      resolve(null);
+      return;
+    }
     onMessage(messaging, (payload) => {
       resolve(payload);
     });

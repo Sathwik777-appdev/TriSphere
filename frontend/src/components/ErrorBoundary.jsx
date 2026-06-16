@@ -57,6 +57,9 @@ export default class ErrorBoundary extends React.Component {
             boxSizing: 'border-box'
           }}>
             <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>⚠️ Failed to load {this.props.context || 'component'}</p>
+            <p style={{ margin: '0 0 12px 0', fontSize: '11px', opacity: 0.8 }}>
+              {this.state.error?.message || String(this.state.error)}
+            </p>
             <button
               onClick={() => this.setState({ hasError: false, error: null, info: null })}
               style={{

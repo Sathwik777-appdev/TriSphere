@@ -3,6 +3,7 @@ import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebas
 import { db } from '../services/firebase';
 import StudentSubmissions from './StudentSubmissions';
 import { useIsMobile } from '../hooks/useMediaQuery';
+import { safeLocalStorage } from '../utils/storage';
 
 export const StudentProgressTable = ({ students = [], classNumber, subject, schoolName }) => {
   const [studentData, setStudentData] = useState([]);
@@ -21,7 +22,7 @@ export const StudentProgressTable = ({ students = [], classNumber, subject, scho
       try {
         // Get all students from the users collection
         // Query by role first, then filter by class locally to handle type mismatches
-        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        const userData = safeLocalStorage.get('userData', {});
         const isDeveloper = userData?.role === 'developer';
         const schoolFilter = isDeveloper ? [] : [where('schoolName', '==', schoolName || '')];
 

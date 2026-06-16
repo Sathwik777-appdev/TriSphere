@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { offlineDB, isOffline } from '../utils/offlineDB';
+import { safeLocalStorage } from '../utils/storage';
 
 const StudentAnnouncements = ({ userId, classNumber, schoolName }) => {
   const [announcements, setAnnouncements] = useState([]);
@@ -40,7 +41,7 @@ const StudentAnnouncements = ({ userId, classNumber, schoolName }) => {
 
         // Targeted queries
         const announcementsRef = collection(db, 'announcements');
-        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        const userData = safeLocalStorage.get('userData', {});
         const isDeveloper = userData?.role === 'developer';
         const schoolFilter = isDeveloper ? [] : [where('schoolName', '==', schoolName || '')];
 

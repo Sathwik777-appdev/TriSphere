@@ -291,6 +291,10 @@
   }
 }
 
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
 @keyframes pulse {
 
   0%,

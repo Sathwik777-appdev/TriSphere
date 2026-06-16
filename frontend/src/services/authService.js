@@ -281,11 +281,13 @@ export const logoutUser = async () => {
         const { doc, updateDoc, arrayRemove } = await import('firebase/firestore');
         const VAPID_KEY = 'BCQ5naTxjzLBGg5LAr8mdjvmWMdhHJ6NhECt7Zm1Heu7RPch5_sCH1ILKeOJotIArRjaHkNFet6N9S9tQLVX5t4';
         
-        const token = await getToken(messaging, { vapidKey: VAPID_KEY });
-        if (token) {
-          await updateDoc(doc(db, 'users', user.uid), {
-            fcmTokens: arrayRemove(token)
-          });
+        if (messaging) {
+          const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+          if (token) {
+            await updateDoc(doc(db, 'users', user.uid), {
+              fcmTokens: arrayRemove(token)
+            });
+          }
         }
       } catch (e) {
         console.warn('Failed to remove FCM token on logout', e);

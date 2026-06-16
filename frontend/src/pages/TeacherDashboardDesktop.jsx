@@ -34,6 +34,7 @@ import { TeacherViewNav } from '../components/teacher/TeacherViewNav';
 import { AccountSettings } from '../components/AccountSettings';
 import { ProgressReport } from '../components/ProgressReport';
 import SimulationAssignment from '../components/SimulationAssignment';
+import TeacherEarlyWarning from '../components/TeacherEarlyWarning';
 
 
 
@@ -226,7 +227,8 @@ export const TeacherDashboard = () => {
     { id: 'students', label: '👥 Student Progress', icon: '👥' },
     { id: 'announcements', label: '📢 Announcements', icon: '📢' },
     { id: 'simulations', label: '🧪 Simulation Lab', icon: '🧪' },
-    { id: 'reports', label: '📊 Reports', icon: '📊' }
+    { id: 'reports', label: '📊 Reports', icon: '📊' },
+    { id: 'earlywarning', label: '🚨 Early Warning', icon: '🚨' }
   ];
 
   // Swipe navigation handlers
@@ -331,6 +333,16 @@ export const TeacherDashboard = () => {
               schoolName={userData?.schoolName || ''}
               teacherSubject={userData?.subject}
               userRole={userData?.role}
+            />
+          </ErrorBoundary>
+        );
+      case 'earlywarning':
+        return (
+          <ErrorBoundary mini context="Early Warning">
+            <TeacherEarlyWarning
+              classNumber={selectedClass}
+              subject={selectedSubject}
+              schoolName={userData?.schoolName || ''}
             />
           </ErrorBoundary>
         );
