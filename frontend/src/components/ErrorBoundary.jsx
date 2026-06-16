@@ -1,5 +1,6 @@
 import React from 'react';
 import { logError } from '../services/errorLogger';
+import { safeSessionStorage } from '../utils/storage';
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -17,27 +18,46 @@ export default class ErrorBoundary extends React.Component {
     // Log to Firestore for Admin monitoring
     logError(error, this.props.context || 'ErrorBoundary', info?.componentStack);
 
-
     // Check if it's a "Failed to fetch dynamically imported module" error
     // This often happens when a new version is deployed and the browser tries to load an old chunk
-    const isChunkLoadFailed = error?.name === 'ChunkLoadError' ||
-      (error?.message && (
-        error.message.includes('Failed to fetch dynamically imported module') ||
-        error.message.includes('loading chunk') ||
-        error.message.includes('Importing a module script failed')
-      ));
+    const errorStr = (error?.message || error?.stack || String(error) || '').toLowerCase();
+    const isChunkLoadFailed =
+      error?.name === 'ChunkLoadError' ||
+      errorStr.includes('failed to fetch dynamically imported module') ||
+      errorStr.includes('loading chunk') ||
+      errorStr.includes('importing a module script failed') ||
+      errorStr.includes('failed to fetch') ||
+      errorStr.includes('load chunk') ||
+      errorStr.includes('typeerror: failed to fetch');
 
     if (isChunkLoadFailed) {
       console.log('Detected chunk load failure. Attempting automatic reload...');
 
-      // Save to sessionStorage to avoid infinite reload loops
-      const lastReload = sessionStorage.getItem('last-chunk-reload');
-      const now = Date.now();
+      let canReload = true;
+      try {
+        const lastReload = safeSessionStorage.get('last-chunk-reload');
+        const now = Date.now();
+        if (lastReload && (now - parseInt(lastReload)) < 10000) {
+          canReload = false;
+        } else {
+          safeSessionStorage.set('last-chunk-reload', now.toString());
+        }
+      } catch (e) {
+        console.warn('Storage check failed during chunk retry:', e);
+      }
 
-      // Only auto-reload if we haven't reloaded in the last 10 seconds
-      if (!lastReload || (now - parseInt(lastReload)) > 10000) {
-        sessionStorage.setItem('last-chunk-reload', now.toString());
-        window.location.reload();
+      // Fallback: Check query params to prevent infinite loop if storage is blocked/disabled
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('chunk-retry')) {
+        canReload = false;
+      }
+
+      if (canReload) {
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('chunk-retry', 'true');
+        window.location.replace(newUrl.toString());
+      } else {
+        console.warn('Chunk reload ignored to prevent infinite loop.');
       }
     }
   }

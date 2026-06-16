@@ -176,6 +176,26 @@ function AppContent() {
 }
 
 function App() {
+  // Clear chunk retry query parameter and lazy-retry session flags on successful app mount
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('chunk-retry')) {
+        url.searchParams.delete('chunk-retry');
+        window.history.replaceState({}, document.title, url.pathname + url.search);
+      }
+
+      const keys = safeSessionStorage.keys();
+      keys.forEach(key => {
+        if (key.startsWith('retry-lazy-')) {
+          safeSessionStorage.remove(key);
+        }
+      });
+    } catch (e) {
+      console.warn('Failed to clean up retry flags on mount:', e);
+    }
+  }, []);
+
   // Version check states for update gate
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [isForceUpdate, setIsForceUpdate] = useState(false);
