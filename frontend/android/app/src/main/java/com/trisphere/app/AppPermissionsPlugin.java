@@ -32,7 +32,11 @@ import com.getcapacitor.annotation.PermissionCallback;
         ),
         @Permission(
             alias = "files_tiramisu",
-            strings = { Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO }
+            strings = { 
+                Manifest.permission.READ_MEDIA_IMAGES, 
+                Manifest.permission.READ_MEDIA_VIDEO,
+                Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+            }
         )
     }
 )
@@ -41,7 +45,6 @@ public class AppPermissionsPlugin extends Plugin {
     @PluginMethod
     public void exitApp(PluginCall call) {
         getActivity().finishAffinity();
-        System.exit(0);
         call.resolve();
     }
 
@@ -71,6 +74,10 @@ public class AppPermissionsPlugin extends Plugin {
     @PluginMethod
     public void requestPermission(PluginCall call) {
         String type = call.getString("type");
+        if (type == null) {
+            call.reject("Permission type parameter 'type' is required");
+            return;
+        }
         
         if ("notifications".equals(type) && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             JSObject ret = new JSObject();
@@ -90,6 +97,10 @@ public class AppPermissionsPlugin extends Plugin {
     @PermissionCallback
     private void permissionCallback(PluginCall call) {
         String type = call.getString("type");
+        if (type == null) {
+            call.reject("Permission type parameter 'type' is required in callback");
+            return;
+        }
         boolean granted;
         if ("files".equals(type) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             PermissionState state = getPermissionState("files_tiramisu");
