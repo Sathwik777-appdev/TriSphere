@@ -30,8 +30,13 @@ const requestMicPermission = async () => {
   let micGranted = false;
   if (Capacitor.isNativePlatform() && AppPermissions) {
     try {
-      const res = await AppPermissions.requestPermission({ type: 'microphone' });
-      micGranted = !!res.granted;
+      const check = await AppPermissions.checkPermissions();
+      if (check && check.microphone) {
+        micGranted = true;
+      } else {
+        const res = await AppPermissions.requestPermission({ type: 'microphone' });
+        micGranted = !!res.granted;
+      }
     } catch (err) {
       console.warn('Native microphone permission request failed:', err);
     }
